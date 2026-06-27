@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # --- POSTGRESQL DATABASE SERVICE ---
+  chat-db:
+    image: postgres:16-alpine
+    container_name: chat_postgres_db
+    environment:
+      POSTGRES_USER: lenard_admin
+      POSTGRES_PASSWORD: super_secure_password123
+      POSTGRES_DB: chat_system_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chat-network
+
+  # --- .NET WEB API SERVICE ---
+  chat-api:
+    image: chat-api-service
+    container_name: chat_backend_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080" # Maps local port 5000 to container port 8080
+    environment:
+      - Jwt__Key=${JWT_SECRET_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Hashids__Salt=${HASHID_SALT}
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=chat-db;Port=5432;Database=chat_system_db;Username=lenard_admin;Password=super_secure_password123
+    depends_on:
+      - chat-db
+    networks:
+      - chat-network
+
+volumes:
+  postgres_data:
+
+networks:
+  chat-network:
