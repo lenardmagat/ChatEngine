@@ -1,5 +1,4 @@
-using ChatSystem.WebSocketManger;
-using ChatSystem.WebSocketServices;
+
 using Microsoft.EntityFrameworkCore;
 using ChatSystem.DataBase;
 using Microsoft.IdentityModel.Protocols.Configuration;
@@ -14,10 +13,8 @@ public static class DependenciesInjection
         var _DbKey = configuration.GetConnectionString("DefaultConnection") ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
         if(string.IsNullOrEmpty(_DbKey)) throw new InvalidConfigurationException("Data Base connection string is misisng");
         services.AddDbContext<DbManager>(options => options.UseNpgsql(_DbKey));
-        services.AddSingleton<WebSocketConnectionManager>();
-        services.AddScoped<WebSocketHandler>();
-        services.AddScoped<IChatServices, ChatServices>();
         services.AddScoped<IAccountServices, AccountServices>();
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
         services.AddSingleton<IHashids>(_ => new Hashids(configuration["Hashids:Salt"], 8));
         services.AddSingleton<IHasher>(sp =>
         {   var hashids = sp.GetRequiredService<IHashids>();

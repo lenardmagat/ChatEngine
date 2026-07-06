@@ -1,0 +1,1 @@
+namespace ChatSystem.Features.Chats;

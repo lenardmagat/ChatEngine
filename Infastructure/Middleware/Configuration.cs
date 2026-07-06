@@ -27,7 +27,6 @@ class Configuration
                 {  
                 options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                 {
-
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
@@ -37,8 +36,36 @@ class Configuration
                     IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
                     System.Text.Encoding.UTF8.GetBytes(JWTKey)) 
                 };
-            });
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/ChatHub", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    },
+                    // ADD THIS TO EXPOSE THE HIDDEN EXCEPTION:
+                    OnAuthenticationFailed = context =>
+                    {
+                        Console.WriteLine($"[🚨 AUTH FAILED] Exception message: {context.Exception.Message}");
+                        return Task.CompletedTask;
+                    }
+                };
+            }
+            );
         builder.Services.AddApplicationServices(builder.Configuration);
+        builder.Services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = true;
+        }
+        ).AddJsonProtocol(options => 
+        {
+            options.PayloadSerializerOptions.PropertyNamingPolicy = null; // Forces exact string casing matching
+        });
         return builder.Build();
     }
 }

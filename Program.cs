@@ -1,6 +1,6 @@
 using ChatSystem.DataBase;
+using ChatSystem.Hubs;
 using ChatSystem.Middleware;
-using ChatSystem.WebSocketMiddleware;
 using Serilog;
 var app = Configuration.webApplication();
 app.UseSerilogRequestLogging();
@@ -8,8 +8,8 @@ app.UseWebSockets();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<WebSocketRoutingMiddleware>();
 app.MapControllers();
+app.MapHub<AppHub>("/ChatHub");
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;

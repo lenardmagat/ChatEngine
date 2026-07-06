@@ -8,6 +8,7 @@ public interface IAccountServices
 {
     public Task<Result> CreateAccountService(AccountCredentials accountData, CancellationToken cancellation);
     public Task<Result<LoginResponseData>> LoginAccountService(AccountCredentials accountData, CancellationToken cancellation);
+    public Task<Result<string>> GetAccountHashIdService(int accountId, CancellationToken cancellation);
 }
 public class AccountServices : IAccountServices
 {
@@ -46,5 +47,11 @@ public class AccountServices : IAccountServices
                 timestamp: DateTime.UtcNow
             )
         );
+    }
+    public async Task<Result<string>> GetAccountHashIdService(int accountId, CancellationToken cancellation)
+    {
+        if(!await _db.Users.Where(u => u.UserId == accountId).AnyAsync())
+            return Result<string>.Failure("can't find", 404);
+        return Result<string>.Success(_hasher.CreateHashids(accountId));
     }
 }
