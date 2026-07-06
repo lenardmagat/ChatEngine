@@ -67,7 +67,7 @@ public class LoadConversationHandler : IRequestHandler<LoadConversationCommand, 
             response.Add(new LoadConversationResponse
             (
                 RoomId : _hasher.CreateHashids(convoData.RoomId),
-                LastTimeStampt : RecentMessages.Select(d => d.TimeStampt).FirstOrDefault(),
+                LastTimeStampt : RecentMessages.Select(d => d.TimeStampt).LastOrDefault(),
                 Chats : RecentMessages
             )
             );
