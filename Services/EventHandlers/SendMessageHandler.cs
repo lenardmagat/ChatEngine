@@ -45,6 +45,7 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
             NewMessage : NewMessageData.MessageText,
             TimeStampt : NewMessageData.TimeStamp.ToString()
         );
+        await _db.SaveChangesAsync();
         return Result<MessageResponseDTO>.Success(responseDTO);
     }
 }
