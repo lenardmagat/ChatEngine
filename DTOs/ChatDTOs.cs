@@ -17,7 +17,8 @@ public record ChatData(
     string ChatMessage,
     DateTime TimeStampt,
     string SenderName,
-    string SenderId
+    string SenderId,
+    string RecieverId
 );
 public record LoadConversationResponse(
     string RoomId,
