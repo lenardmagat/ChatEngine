@@ -1,4 +1,5 @@
 using ChatSystem.DataBase;
+using ChatSystem.DTOs;
 using ChatSystem.ErrorHandling;
 using ChatSystem.Models;
 using ChatSystem.SystemEvents;
@@ -6,7 +7,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatSystem.Features.Chats;
-public class InitializeChatCommandHandler : IRequestHandler<InitializeChatCommand, Result<string>>
+public class InitializeChatCommandHandler : IRequestHandler<InitializeChatCommand, Result<ChatData?>>
 {
     private readonly DbManager _db;
     private readonly IHasher _hasher;
@@ -15,41 +16,112 @@ public class InitializeChatCommandHandler : IRequestHandler<InitializeChatComman
         _db = db;
         _hasher = hasher;
     }
-    public async Task<Result<string>> Handle(InitializeChatCommand command, CancellationToken cancellation)
-{
-    Result<int> RecieverId = _hasher.DecodeHashids(command.RecieverId);
-    if(!RecieverId.IsSuccess)
-        return Result<string>.Failure(RecieverId.Error!, RecieverId.StatusCode);
-    int? ChatId = await _db.Chatrooms.AsNoTracking()
-        .Where(r => r.Participants.Any(p => p.UserId == command.UserId) && 
-                    r.Participants.Any(p => p.UserId == RecieverId.Value))
-        .Select(r => (int?)r.Id)
-        .FirstOrDefaultAsync(cancellation);
+    public async Task<Result<ChatData?>> Handle(InitializeChatCommand command, CancellationToken cancellation)
+    {
+        ChatData? ChatDatas;
+        if(string.IsNullOrEmpty(command.ChatId) && !string.IsNullOrEmpty(command.RecieverId))
+        {
+            var chatMessages = await _db.Chatrooms
+                                .Where(c => 
+                                c.Participants.Any(p => p.UserId == command.UserId) &&
+                                c.Participants.Any(p => p.UserId == _hasher.DecodeHashids(command.RecieverId).Value)
+                                )
+                                .Select(r => new
+                                {
+                                    RoomId = r.Id,
+                                    ReceiverId = r.Participants
+                                        .Where(p => p.UserId != command.UserId)
+                                        .Select(u => u.UserId)
+                                        .FirstOrDefault(),
+                                    LastMessageTimeStampt = r.Messages
+                                        .Max(m => (DateTime?)m.TimeStamp ?? DateTime.MinValue),
+                                    RecentMessages = r.Messages
+                                        .OrderByDescending(m => m.Id)
+                                        .Take(15)
+                                        .Select(m => new
+                                        {
+                                            chatId = m.Id,
+                                            senderName = m.Sender.Username,
+                                            senderId = m.SenderId,
+                                            chatMessage = m.MessageText,
+                                            timeStampt = m.TimeStamp 
+                                        }
+                                        ).ToList()
+                                }
+                                ).FirstOrDefaultAsync();
+        if(chatMessages is null)
+            {
+                return Result<ChatData?>.Success(new ChatData(true, null, null ,null ,null));
+            }
+            List<MessageData>? messageDatas = chatMessages.RecentMessages.Select(m => new 
+                MessageData(
+                    ChatId : _hasher.CreateHashids(m.chatId),
+                    ChatMessage : m.chatMessage,
+                    TimeStampt: m.timeStampt,
+                    SenderName : m.senderName,
+                    SenderId : _hasher.CreateHashids(m.senderId)
+                )
+            ).ToList();
 
-    if (ChatId is not null && ChatId.Value != 0)
-    {
-        return Result<string>.Success(_hasher.CreateHashids(ChatId.Value));
+        ChatDatas = new ChatData(
+            IsNew : false,
+            RoomId : _hasher.CreateHashids(chatMessages.RoomId),
+            LastTimeStampt : chatMessages.LastMessageTimeStampt,
+            RecieverId : _hasher.CreateHashids(chatMessages.ReceiverId),
+            MessageDatas : messageDatas
+        );
+        return Result<ChatData?>.Success(ChatDatas);
+        }
+        else if(string.IsNullOrEmpty(command.RecieverId) && !string.IsNullOrEmpty(command.ChatId))
+        {
+            var chatMessages = await _db.Chatrooms
+                                .Where(m => m.Id == _hasher.DecodeHashids(command.ChatId).Value)
+                                .Select(r => new
+                                {
+                                    receiverId = _hasher
+                                                    .CreateHashids(
+                                                        r.Participants
+                                                        .Where(p => p.UserId != command.UserId)
+                                                        .Select(u => u.UserId)
+                                                        .FirstOrDefault()),
+                                    LastMessageTimeStampt = r.Messages
+                                                    .Max(m => (DateTime?)m.TimeStamp ?? DateTime.MinValue),
+                                    RecentMessages = r.Messages
+                                        .OrderByDescending(m => m.Id)
+                                        .Take(15)
+                                        .Select(m => new
+                                        {
+                                            chatId = m.Id,
+                                            senderName = m.Sender.Username,
+                                            senderId = m.SenderId,
+                                            chatMessage = m.MessageText,
+                                            timeStampt = m.TimeStamp 
+                                        }
+                                        ).ToList()
+                                }
+                                ).FirstOrDefaultAsync();
+            if(chatMessages is null)
+            {
+                return Result<ChatData?>.Failure("Invalid Credentials", StatusCodes.Status401Unauthorized);
+            }
+            List<MessageData>? messageDatas = chatMessages.RecentMessages.Select(m => new 
+                MessageData(
+                    ChatId : _hasher.CreateHashids(m.chatId),
+                    ChatMessage : m.chatMessage,
+                    TimeStampt: m.timeStampt,
+                    SenderName : m.senderName,
+                    SenderId : _hasher.CreateHashids(m.senderId)
+                )
+            ).ToList();
+            ChatDatas = new ChatData(
+            IsNew : false,
+            RoomId : command.ChatId,
+            LastTimeStampt : chatMessages.LastMessageTimeStampt,
+            RecieverId : chatMessages.receiverId,
+            MessageDatas : messageDatas
+        );
+        return Result<ChatData?>.Success(ChatDatas);
+        }
+        return Result<ChatData?>.Failure("", StatusCodes.Status400BadRequest);
     }
-    ChatRoom NewChatRoom = new ChatRoom
-    {
-        IsGroupChat = false
-    };
-    await _db.Chatrooms.AddAsync(NewChatRoom, cancellation);
-    var Participants = new List<RoomParticipant>
-    {
-        new RoomParticipant
-        {
-            Room = NewChatRoom,
-            UserId = command.UserId
-        },
-        new RoomParticipant
-        {
-            Room = NewChatRoom,
-            UserId = RecieverId.Value
-        }    
-    };
-    await _db.participants.AddRangeAsync(Participants, cancellation);
-    await _db.SaveChangesAsync(cancellation);
-    return Result<string>.Success(_hasher.CreateHashids(NewChatRoom.Id));
-}
 }

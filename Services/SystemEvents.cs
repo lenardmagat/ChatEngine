@@ -5,6 +5,6 @@ using MediatR;
 namespace ChatSystem.SystemEvents;
 
     public record SendMessageCommand(int UserId, SendMessage MessageData) : IRequest<Result<MessageResponseDTO>>;
-    public record InitializeChatCommand(int UserId, string RecieverId) : IRequest<Result<string>>;
+    public record InitializeChatCommand(int UserId, string? RecieverId, string? ChatId) : IRequest<Result<ChatData?>>;
     public record IOnConnectAutoJoinChat(int UserId) : IRequest<Result<List<string>>>;
     public record LoadConversationCommand(int UserId) : IRequest<Result<List<LoadConversationResponse>>>;

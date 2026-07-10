@@ -13,13 +13,19 @@ public record MessageResponseDTO(
      
 );
 
-public record ChatData(
+public record MessageData(
     string ChatId,
     string ChatMessage,
     DateTime TimeStampt,
     string SenderName,
-    string SenderId,
-    string RecieverId
+    string SenderId
+);
+public record ChatData(
+    bool IsNew,
+    string? RoomId,
+    DateTime? LastTimeStampt,
+    string? RecieverId,
+    List<MessageData>? MessageDatas
 );
 public record LoadConversationResponse(
     string RoomId,
