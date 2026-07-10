@@ -11,7 +11,7 @@ public partial class AppHub
         string connectionId = Context.ConnectionId;
         int UserId = Context.User!.GetUserId()!.Value;
         IOnConnectAutoJoinChat command = new IOnConnectAutoJoinChat(UserId);
-        Result<List<string>> result = await _mediator.Send(command);
+        Result<string> result = await _mediator.Send(command);
         if (!result.IsSuccess)
         {
             await Clients.Caller.SendAsync("MessageError", new
@@ -23,14 +23,7 @@ public partial class AppHub
         }
         else
         {
-            await Groups.AddToGroupAsync(connectionId, "AppSocket");
-            if(result.Value is not null)
-            {
-                foreach(string RoomId in result.Value)
-                {
-                    await Groups.AddToGroupAsync(connectionId, $"Room_{RoomId}");
-                }
-            }
+            await Groups.AddToGroupAsync(connectionId, $"UsersNotification_{result.Value}");
         }
         await base.OnConnectedAsync();
     }

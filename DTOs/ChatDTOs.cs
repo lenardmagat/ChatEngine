@@ -32,3 +32,12 @@ public record LoadConversationResponse(
     DateTime LastTimeStampt,
     string RecieverId
 );
+
+public class MessageSummaryDto
+{
+    public int ChatId { get; set; }
+    public string SenderName { get; set; } = null!;
+    public int SenderId { get; set; }
+    public string ChatMessage { get; set; } = null!;
+    public DateTime TimeStampt { get; set; }
+}

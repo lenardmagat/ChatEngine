@@ -22,12 +22,12 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
     {
         Result<int> ChatId = _hasher.DecodeHashids(request.MessageData.ChatId);
         User? user = await _db.Chatrooms
-                            .Where(r => r.Id == ChatId.Value && r.Participants
-                            .Any(p => p.UserId == request.UserId))
-                            .SelectMany(a => a.Participants)
-                            .Select(p => p.User)
-                            .Where(u => u.UserId == request.UserId)
-                            .FirstOrDefaultAsync();
+            .Where(r => r.Id == ChatId.Value && r.Participants
+            .Any(p => p.UserId == request.UserId))
+            .SelectMany(a => a.Participants)
+            .Select(p => p.User)
+            .Where(u => u.UserId == request.UserId)
+            .FirstOrDefaultAsync();
         if(user is null) 
             {
                 return Result<MessageResponseDTO>.Failure("Invalid Credential", StatusCodes.Status403Forbidden);
