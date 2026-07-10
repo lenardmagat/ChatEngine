@@ -21,14 +21,16 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
     public async Task<Result<MessageResponseDTO>> Handle(SendMessageCommand request, CancellationToken cancellation)
     {
         Result<int> ChatId = _hasher.DecodeHashids(request.MessageData.ChatId);
-         User? user = await _db.Chatrooms.Where(r => r.Id == ChatId.Value && r.Participants.Any(p => p.UserId == request.UserId))
+        User? user = await _db.Chatrooms
+                            .Where(r => r.Id == ChatId.Value && r.Participants
+                            .Any(p => p.UserId == request.UserId))
                             .SelectMany(a => a.Participants)
                             .Select(p => p.User)
                             .Where(u => u.UserId == request.UserId)
                             .FirstOrDefaultAsync();
         if(user is null) 
             {
-                Result<MessageResponseDTO>.Failure("Invalid Credential", 403);
+                return Result<MessageResponseDTO>.Failure("Invalid Credential", StatusCodes.Status403Forbidden);
             }
         ChatMessage NewMessageData = new ChatMessage
         {

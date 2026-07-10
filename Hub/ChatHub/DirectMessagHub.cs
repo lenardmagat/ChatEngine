@@ -6,10 +6,10 @@ using ChatSystem.ErrorHandling;
 namespace ChatSystem.Hubs;
 public partial class AppHub
 {
-    public async Task DirectMessage(string ChatId, string Message)
+    public async Task DirectMessage(string? ChatId, string Message, string? RecipiendId)
     {
         int UserId = Context.User!.GetUserId()!.Value;
-        SendMessageCommand command = new SendMessageCommand(UserId, new SendMessage(ChatId, Message));
+        SendMessageCommand command = new SendMessageCommand(UserId, new SendMessage(ChatId, Message, RecipiendId));
         Result<MessageResponseDTO> result = await _mediator.Send(command);
         if (!result.IsSuccess)
         {

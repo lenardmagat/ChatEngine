@@ -1,7 +1,8 @@
 namespace ChatSystem.DTOs;
 public record SendMessage(
-    string ChatId,
-    string Message
+    string? ChatId,
+    string Message,
+    string? RecieverId
 );
 public record MessageResponseDTO(
     string NewMessageId,
@@ -23,5 +24,5 @@ public record ChatData(
 public record LoadConversationResponse(
     string RoomId,
     DateTime LastTimeStampt,
-    List<ChatData> Chats
+    string RecieverId
 );

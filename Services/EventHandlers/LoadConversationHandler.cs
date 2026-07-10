@@ -32,18 +32,20 @@ public class LoadConversationHandler : IRequestHandler<LoadConversationCommand, 
                                 .Where(p => p.UserId != request.UserId)
                                 .Select(u => u.UserId)
                                 .First(),
-                            RecentMessages = r.Messages
-                                .OrderByDescending(m => m.Id)
-                                .Take(15)
-                                .Select(m => new
-                                {
-                                    chatId = m.Id,
-                                    senderName = m.Sender.Username,
-                                    senderId = m.SenderId,
-                                    chatMessage = m.MessageText,
-                                    timestampt = m.TimeStamp,
-                                }
-                                ).ToList()
+                            LastMessageTimeStampt = r.Messages
+                                .Max(m => (DateTime?)m.TimeStamp ?? DateTime.MinValue)
+                            // RecentMessages = r.Messages
+                            //     .OrderByDescending(m => m.Id)
+                            //     .Take(15)
+                            //     .Select(m => new
+                            //     {
+                            //         chatId = m.Id,
+                            //         senderName = m.Sender.Username,
+                            //         senderId = m.SenderId,
+                            //         chatMessage = m.MessageText,
+                            //         timestampt = m.TimeStamp,
+                            //     }
+                            //     ).ToList()
                         }
                         ).ToListAsync();
         if(result is null)
@@ -53,22 +55,22 @@ public class LoadConversationHandler : IRequestHandler<LoadConversationCommand, 
         List<LoadConversationResponse> response = new List<LoadConversationResponse>();
         foreach(var convoData in result)
         {
-            var RecentMessages = convoData.RecentMessages.Select(m => new ChatData
-                (
-                    ChatId : _hasher.CreateHashids(m.chatId),
-                    ChatMessage : m.chatMessage,
-                    TimeStampt : m.timestampt,
-                    SenderName : m.senderName,
-                    SenderId : _hasher.CreateHashids(request.UserId),
-                    RecieverId : _hasher.CreateHashids(convoData.recieverId)
-                )
-            ).ToList();
-            RecentMessages.Reverse();
+            // var RecentMessages = convoData.RecentMessages.Select(m => new ChatData
+            //     (
+            //         ChatId : _hasher.CreateHashids(m.chatId),
+            //         ChatMessage : m.chatMessage,
+            //         TimeStampt : m.timestampt,
+            //         SenderName : m.senderName,
+            //         SenderId : _hasher.CreateHashids(request.UserId),
+            //         RecieverId : _hasher.CreateHashids(convoData.recieverId)
+            //     )
+            // ).ToList();
+            // RecentMessages.Reverse();
             response.Add(new LoadConversationResponse
             (
                 RoomId : _hasher.CreateHashids(convoData.RoomId),
-                LastTimeStampt : RecentMessages.Select(d => d.TimeStampt).LastOrDefault(),
-                Chats : RecentMessages
+                LastTimeStampt : convoData.LastMessageTimeStampt,//RecentMessages.Select(d => d.TimeStampt).LastOrDefault(),
+                RecieverId : _hasher.CreateHashids(convoData.recieverId)
             )
             );
         }
