@@ -5,11 +5,11 @@ using ChatSystem.ErrorHandling;
 namespace ChatSystem.Hubs;
 public partial class AppHub
 {
-    public async Task InitializeChat(string RecieverId)
+    public async Task InitializeChat(string? RecieverId, string? ChatId)
     {
         int UserId = Context.User!.GetUserId()!.Value;
-        InitializeChatCommand command = new InitializeChatCommand(UserId, RecieverId);
-        Result<string> result = await _mediator.Send(command);
+        InitializeChatCommand command = new InitializeChatCommand(UserId, RecieverId, ChatId);
+        var result = await _mediator.Send(command);
         if(!result.IsSuccess)
             await Clients.Caller.SendAsync("Error", new {text = result.Error});
         
