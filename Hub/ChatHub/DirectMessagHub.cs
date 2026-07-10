@@ -23,6 +23,7 @@ public partial class AppHub
         else
         {
             await Clients.Caller.SendAsync("NewMessage", result.Value);
+            await Clients.Group($"UsersNotification_{result.Value!.ReceipientId}").SendAsync("NewMessageNotification", result.Value);
             await Clients.OthersInGroup($"Room_{result.Value!.RoomId}").SendAsync("NewMessage", result.Value);
         }
     }

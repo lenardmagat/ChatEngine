@@ -1,6 +1,6 @@
 namespace ChatSystem.DTOs;
 public record SendMessage(
-    string? ChatId,
+    string? RoomId,
     string Message,
     string? RecieverId
 );
@@ -9,7 +9,8 @@ public record MessageResponseDTO(
     string RoomId,
     string SenderName,
     string NewMessage,
-    string TimeStampt
+    string TimeStampt,
+    string ReceipientId
      
 );
 
@@ -40,4 +41,10 @@ public class MessageSummaryDto
     public int SenderId { get; set; }
     public string ChatMessage { get; set; } = null!;
     public DateTime TimeStampt { get; set; }
+}
+
+public class ParticipantSummaryDto
+{
+    public int ParticipantId { get; set; }
+    public bool IsCurrentUser { get; set; }
 }

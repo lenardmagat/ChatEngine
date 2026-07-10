@@ -6,11 +6,9 @@ using System.Linq.Expressions;
 using ChatSystem.SystemEvents;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-
 namespace ChatSystem.Features.Chats;
 public static class ChatProjections
 {
-    // A clean method that returns a compiled query tree expression for the Message list
     public static Expression<Func<ChatMessage, MessageSummaryDto>> ToSummary()
     {
         return m => new MessageSummaryDto
