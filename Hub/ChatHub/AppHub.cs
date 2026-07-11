@@ -1,10 +1,16 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
+using Microsoft.Extensions.Logging;
 namespace ChatSystem.Hubs;
 [Authorize]
 public partial class AppHub : Hub
 {
     private readonly IMediator _mediator;
-    public AppHub(IMediator mediator) => _mediator = mediator;
+    private readonly ILogger _logger;
+    public AppHub(IMediator mediator, ILogger logger) { 
+        _mediator = mediator;
+        _logger = logger;
+        }
+    
 }
