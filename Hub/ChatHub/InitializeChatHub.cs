@@ -18,7 +18,7 @@ public partial class AppHub
             else {
                 if(!result.Value!.IsNew)
                 {
-                    await Groups.AddToGroupAsync(Context.ConnectionId, $"Room_{result.Value}");
+                    await Groups.AddToGroupAsync(Context.ConnectionId, $"Room_{result.Value.RoomId}");
                     await Clients.Caller.SendAsync("ChatId", new
                         {
                             text = result.Value
@@ -27,7 +27,11 @@ public partial class AppHub
                 }
                 else
                 {
-                    
+                    await Clients.Caller.SendAsync("ChatId", new
+                        {
+                            data = result.Value
+                        }
+                    );
                 }
                 _logger.LogInformation($"Success intializing {result.Value} Chat from user {UserId}");
             }

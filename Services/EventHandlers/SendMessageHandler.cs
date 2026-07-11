@@ -5,6 +5,7 @@ using ChatSystem.DTOs;
 using ChatSystem.ErrorHandling;
 using ChatSystem.Models;
 using ChatSystem.DataBase;
+using ChatSystem.core;
 namespace ChatSystem.Features.Chats;
 public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Result<MessageResponseDTO>>
 {
@@ -19,8 +20,8 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
     }
     public async Task<Result<MessageResponseDTO>> Handle(SendMessageCommand request, CancellationToken cancellation)
     {
-        int? targetRoomid = !string.IsNullOrEmpty(request.MessageData.RoomId)? _hasher.DecodeHashids(request.MessageData.RoomId).Value : null;
-        int? targetReceiverId = !string.IsNullOrEmpty(request.MessageData.RecieverId) ? _hasher.DecodeHashids(request.MessageData.RecieverId).Value : null;
+        int? targetRoomid = !string.IsNullOrEmpty(request.MessageData.RoomId)? _hasher.DecodeHashids(request.MessageData.RoomId, HashContext.Room).Value : null;
+        int? targetReceiverId = !string.IsNullOrEmpty(request.MessageData.RecieverId) ? _hasher.DecodeHashids(request.MessageData.RecieverId, HashContext.User).Value : null;
         if (!targetRoomid.HasValue && !targetReceiverId.HasValue)
         {
             return Result<MessageResponseDTO>.Failure("Invalid request parameters.", StatusCodes.Status400BadRequest);
@@ -96,9 +97,9 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
 
         await _db.Messages.AddAsync(newMessage);
         await _db.SaveChangesAsync(cancellation);
-        string newMessageHashedId = _hasher.CreateHashids(newMessage.Id);
-        string hashedRoomId = _hasher.CreateHashids(finalRoomId);
-        string hashedRecipientId = _hasher.CreateHashids(finalRecipientId);
+        string newMessageHashedId = _hasher.CreateHashids(newMessage.Id, HashContext.Message);
+        string hashedRoomId = _hasher.CreateHashids(finalRoomId, HashContext.Room);
+        string hashedRecipientId = _hasher.CreateHashids(finalRecipientId, HashContext.User);
 
     return Result<MessageResponseDTO>.Success(
         new MessageResponseDTO

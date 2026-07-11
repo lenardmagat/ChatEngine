@@ -29,7 +29,8 @@ services:
       - Jwt__Key=${JWT_SECRET_KEY}
       - Jwt__Issuer=${JWT_ISSUER}
       - Jwt__Audience=${JWT_AUDIENCE}
-      - Hashids__Salt=${HASHID_SALT}
+      - Hashids__HasherSalt=${HASHID_SALT}
+      - Hashids__MinHashLength=${Hashids__MinHashLength}
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=chat-db;Port=5432;Database=chat_system_db;Username=lenard_admin;Password=super_secure_password123
     depends_on:

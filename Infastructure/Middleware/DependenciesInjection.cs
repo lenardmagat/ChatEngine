@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Protocols.Configuration;
 using ChatSystem.Services;
 using HashidsNet;
 using ChatSystem.core;
+using ChatSystem.core.KeyConfiguration;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -15,15 +16,15 @@ public static class DependenciesInjection
         services.AddDbContext<DbManager>(options => options.UseNpgsql(_DbKey));
         services.AddScoped<IAccountServices, AccountServices>();
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
-        services.AddSingleton<IHashids>(_ => new Hashids(configuration["Hashids:Salt"], 8));
-        services.AddSingleton<IHasher>(sp =>
-        {   var hashids = sp.GetRequiredService<IHashids>();
-            string? keystring = configuration["Jwt:Key"] ?? throw new InvalidConfigurationException("JWT key string is missing.");
-            string? issuer = configuration["Jwt:Issuer"] ?? throw new InvalidConfigurationException("Issuer key string is missing.");
-            string? audience = configuration["Jwt:Audience"] ?? throw new InvalidConfigurationException("Audience key string is missing.");
-            return new SystemSecurity(hashids, keystring, issuer, audience);      
-        }
-        );
+        services.AddOptions<HashidsSettings>()
+            .Bind(configuration.GetSection("Hashids"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart(); 
+        services.AddOptions<JwtSettings>()
+            .Bind(configuration.GetSection("Jwt"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddSingleton<IHasher, SystemSecurity>();
         return services;
     }
 }

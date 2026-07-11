@@ -1,3 +1,4 @@
+using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.DTOs;
 using ChatSystem.ErrorHandling;
@@ -45,9 +46,9 @@ public class LoadConversationHandler : IRequestHandler<LoadConversationCommand, 
         {
             response.Add(new LoadConversationResponse
             (
-                RoomId : _hasher.CreateHashids(convoData.RoomId),
+                RoomId : _hasher.CreateHashids(convoData.RoomId, HashContext.Room),
                 LastTimeStampt : convoData.LastMessageTimeStampt,//RecentMessages.Select(d => d.TimeStampt).LastOrDefault(),
-                RecieverId : _hasher.CreateHashids(convoData.recieverId)
+                RecieverId : _hasher.CreateHashids(convoData.recieverId, HashContext.User)
             )
             );
         }

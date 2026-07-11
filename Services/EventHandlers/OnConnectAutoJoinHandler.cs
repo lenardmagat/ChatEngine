@@ -1,3 +1,4 @@
+using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.ErrorHandling;
 using ChatSystem.SystemEvents;
@@ -23,6 +24,6 @@ public class OnConnectAutoJoinCommandHandler : IRequestHandler<IOnConnectAutoJoi
         {
             return Result<string>.Failure("Invalid Token", StatusCodes.Status403Forbidden);
         }
-        return Result<string>.Success(_hasher.CreateHashids(UserId.Value));
+        return Result<string>.Success(_hasher.CreateHashids(UserId.Value, HashContext.User));
     }
 }

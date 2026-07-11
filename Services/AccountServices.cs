@@ -1,3 +1,4 @@
+using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.ErrorHandling;
 using ChatSystem.Models;
@@ -52,6 +53,6 @@ public class AccountServices : IAccountServices
     {
         if(!await _db.Users.Where(u => u.UserId == accountId).AnyAsync())
             return Result<string>.Failure("can't find", 404);
-        return Result<string>.Success(_hasher.CreateHashids(accountId));
+        return Result<string>.Success(_hasher.CreateHashids(accountId, HashContext.User));
     }
 }

@@ -4,3 +4,4 @@
 Properties/
 appsettings.Development.json
 appsettings.json
+.env
