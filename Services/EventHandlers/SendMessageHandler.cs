@@ -1,6 +1,5 @@
 using ChatSystem.SystemEvents;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using ChatSystem.DTOs;
 using ChatSystem.ErrorHandling;
@@ -48,6 +47,7 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
         .FirstOrDefaultAsync(cancellation);
         int finalRoomId;
         int finalRecipientId;
+        string Username;
         if (roomData != null)
         {
             if (!roomData.IsSenderParticipant)
@@ -57,26 +57,34 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
 
             finalRoomId = roomData.RoomId;
             finalRecipientId = roomData.RecipientUserId;
+            Username = roomData.SenderName!;
         }
         else
         {
             if (targetRoomid.HasValue)
-        {
+            {
             return Result<MessageResponseDTO>.Failure("Chat session not found.", StatusCodes.Status404NotFound);
-        }
-        bool receiverExists = await _db.Users.AnyAsync(u => u.UserId == targetReceiverId!.Value, cancellation);
-        if (!receiverExists)
-        {
-            return Result<MessageResponseDTO>.Failure("Recipient user does not exist.", StatusCodes.Status404NotFound);
-        }
-        var newRoom = new ChatRoom();
-        newRoom.Participants.Add(new RoomParticipant { UserId = request.UserId });
-        newRoom.Participants.Add(new RoomParticipant { UserId = targetReceiverId!.Value });
-        await _db.Chatrooms.AddAsync(newRoom);
-        await _db.SaveChangesAsync(cancellation);
+            }
+            var verifiedUsers = await _db.Users
+                .AsNoTracking()
+                .Where(u => u.UserId == request.UserId || u.UserId == targetReceiverId!.Value)
+                .Select(ud => new {Id =  -ud.UserId, name = ud.Username})
+                .ToListAsync();
+            var recipientAccount = verifiedUsers.FirstOrDefault(u => u.Id == targetReceiverId!.Value);
+            var senderAccount = verifiedUsers.FirstOrDefault(u => u.Id == request.UserId);
+            if(recipientAccount is null || senderAccount is null)
+            {
+                return Result<MessageResponseDTO>.Failure("One or more participant does not exist.", StatusCodes.Status404NotFound);
+            }
+            var newRoom = new ChatRoom();
+            newRoom.Participants.Add(new RoomParticipant { UserId = request.UserId });
+            newRoom.Participants.Add(new RoomParticipant { UserId = targetReceiverId!.Value });
+            await _db.Chatrooms.AddAsync(newRoom);
+            await _db.SaveChangesAsync(cancellation);
 
-        finalRoomId = newRoom.Id;
-        finalRecipientId = targetReceiverId.Value;
+            finalRoomId = newRoom.Id;
+            finalRecipientId = targetReceiverId.Value;
+            Username = senderAccount.name;
         }
         var newMessage = new ChatMessage
         {
@@ -86,7 +94,7 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
             TimeStamp = DateTime.UtcNow
         };
 
-        _db.Messages.Add(newMessage);
+        await _db.Messages.AddAsync(newMessage);
         await _db.SaveChangesAsync(cancellation);
         string newMessageHashedId = _hasher.CreateHashids(newMessage.Id);
         string hashedRoomId = _hasher.CreateHashids(finalRoomId);
@@ -94,7 +102,7 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
 
     return Result<MessageResponseDTO>.Success(
         new MessageResponseDTO
-            (newMessageHashedId, hashedRoomId, roomData!.SenderName!, request.MessageData.Message, newMessage.TimeStamp.ToString(), hashedRecipientId)
+            (newMessageHashedId, hashedRoomId, Username, request.MessageData.Message, newMessage.TimeStamp.ToString(), hashedRecipientId)
         );
     }
 }
