@@ -68,7 +68,7 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
             var verifiedUsers = await _db.Users
                 .AsNoTracking()
                 .Where(u => u.UserId == request.UserId || u.UserId == targetReceiverId!.Value)
-                .Select(ud => new {Id =  -ud.UserId, name = ud.Username})
+                .Select(ud => new {Id = ud.UserId, name = ud.Username})
                 .ToListAsync();
             var recipientAccount = verifiedUsers.FirstOrDefault(u => u.Id == targetReceiverId!.Value);
             var senderAccount = verifiedUsers.FirstOrDefault(u => u.Id == request.UserId);

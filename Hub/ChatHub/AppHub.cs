@@ -7,8 +7,8 @@ namespace ChatSystem.Hubs;
 public partial class AppHub : Hub
 {
     private readonly IMediator _mediator;
-    private readonly ILogger _logger;
-    public AppHub(IMediator mediator, ILogger logger) { 
+    private readonly ILogger<AppHub> _logger;
+    public AppHub(IMediator mediator, ILogger<AppHub> logger) { 
         _mediator = mediator;
         _logger = logger;
         }

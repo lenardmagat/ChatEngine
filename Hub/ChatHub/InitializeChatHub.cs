@@ -25,6 +25,10 @@ public partial class AppHub
                         }
                     );
                 }
+                else
+                {
+                    
+                }
                 _logger.LogInformation($"Success intializing {result.Value} Chat from user {UserId}");
             }
         }

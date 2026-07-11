@@ -84,7 +84,7 @@ public class InitializeChatCommandHandler : IRequestHandler<InitializeChatComman
                 )
             ).ToList();
         ChatData data = new ChatData(
-            true,
+            false,
             _hasher.CreateHashids(ChatDataProjection.RoomId),
             ChatDataProjection.LastMessageTimeStampt,
             _hasher.CreateHashids(ChatDataProjection.ReceiverId),
