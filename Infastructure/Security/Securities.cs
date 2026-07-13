@@ -89,7 +89,7 @@ public interface IHasher
                 HashContext.User => _UserHashids,
                 HashContext.Room => _RoomHashids,
                 HashContext.Message => _MessageHashids,
-                HashContext.Participant => _MessageHashids,
+                HashContext.Participant => _ParticipantHahids,
                 _ => _UserHashids
             };
             if(!hashidInstance.TryDecodeSingle(hash, out int decoded) || decoded == 0) 
