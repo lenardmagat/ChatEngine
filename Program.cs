@@ -1,6 +1,7 @@
 using ChatSystem.DataBase;
 using ChatSystem.Hubs;
 using ChatSystem.Middleware;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 var app = Configuration.webApplication();
 app.UseSerilogRequestLogging();
@@ -16,7 +17,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<DbManager>();
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
     }
     catch (Exception ex)
     {
