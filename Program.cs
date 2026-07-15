@@ -25,5 +25,4 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred while creating the database tables.");
     }
 }
-
 app.Run();
