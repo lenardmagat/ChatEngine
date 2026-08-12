@@ -8,11 +8,12 @@ public partial class AccountController
 {
     [HttpPatch("AccountUpdate-ChangePassword")]
     public async Task<IActionResult> ChangePasswordEndPoint(
-        [FromBody] PasswordCredentials passwordCredentials
+        [FromBody] PasswordCredentials passwordCredentials,
+        CancellationToken cancellation
     ){
         int UserId = User.GetUserId()!.Value;
         ChangePasswordCommand command = new ChangePasswordCommand(UserId, passwordCredentials);
-        Result result = await _mediator.Send(command);
+        Result result = await _mediator.Send(command, cancellation);
         return result.ToActionResult();
     }
 }

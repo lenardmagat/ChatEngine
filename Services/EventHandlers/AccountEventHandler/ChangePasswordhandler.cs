@@ -1,4 +1,3 @@
-using System.Reflection.Metadata.Ecma335;
 using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.ErrorHandling;
@@ -30,6 +29,6 @@ public class ChangePasswordCommandHandler : IRequestHandler<ChangePasswordComman
         string NewHashedPassowrd = _hasher.HashPassword(command.passwordCredentials.NewPassword);
         user.HashedPassword = NewHashedPassowrd;
         await _db.SaveChangesAsync(cancellationToken);
-        return Result.Success(StatusCodes.Status102Processing);
+        return Result.Success(StatusCodes.Status200OK);
     }
 }

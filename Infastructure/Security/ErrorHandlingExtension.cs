@@ -22,8 +22,8 @@ namespace ChatSystem.ErrorHandling.Extension
         public static IActionResult ToActionResult<T>(this Result<T> result)
         {
             return result.IsSuccess ? 
-                new OkObjectResult(result.Value) :
-                new OkObjectResult(
+                new ObjectResult(result.Value) :
+                new ObjectResult(
                     new
                     {
                         error = result.Error,
