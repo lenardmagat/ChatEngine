@@ -13,3 +13,11 @@ public record LoginResponseData(
     [Required]
     DateTime timestamp
 );
+
+public record PasswordCredentials(
+    [Required]
+    string OldPassword,
+
+    [Required]
+    string NewPassword
+);

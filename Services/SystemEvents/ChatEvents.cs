@@ -2,7 +2,7 @@ using ChatSystem.DTOs;
 using ChatSystem.ErrorHandling;
 using MediatR;
 
-namespace ChatSystem.SystemEvents;
+namespace ChatSystem.SystemEvents.Chats;
 
     public record SendMessageCommand(int UserId, SendMessage MessageData) : IRequest<Result<MessageResponseDTO>>;
     public record InitializeChatCommand(int UserId, string? RecieverId, string? ChatId) : IRequest<Result<ChatData?>>;

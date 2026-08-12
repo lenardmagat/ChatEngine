@@ -1,5 +1,5 @@
 using ChatSystem.Extensions;
-using ChatSystem.SystemEvents;
+using ChatSystem.SystemEvents.Chats;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ChatSystem.Hubs;

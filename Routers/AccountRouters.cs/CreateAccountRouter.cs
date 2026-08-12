@@ -1,23 +1,16 @@
+using ChatSystem.ErrorHandling.Extension;
+using ChatSystem.SystemEvents.Accounts;
 using Microsoft.AspNetCore.Mvc;
 namespace ChatSystem.Routers.Account;
 public partial class AccountController
 {
     [HttpPost("Create")]
     public async Task<IActionResult> CreateAccountEndpoint(
-            [FromBody] AccountCredentials accountCredentials,
-            CancellationToken cancellation
+            [FromBody] AccountCredentials accountCredentials
         )
     {
-        var result = await _accountServices.CreateAccountService(accountCredentials, cancellation);
-        if (!result.IsSuccess)
-        {
-            return StatusCode(result.StatusCode, new
-                {
-                    error = result.Error,
-                    timestampt = DateTime.UtcNow
-                }
-            );
-        }
-        return Ok();
+        CreateAccountCommand command = new CreateAccountCommand(accountCredentials);
+        var result = await _mediator.Send(command);
+        return result.ToActionResult();
     }
 }

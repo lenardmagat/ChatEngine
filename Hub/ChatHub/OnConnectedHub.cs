@@ -1,6 +1,6 @@
 using ChatSystem.Extensions;
 using ChatSystem.DTOs;
-using ChatSystem.SystemEvents;
+using ChatSystem.SystemEvents.Chats;
 using Microsoft.AspNetCore.SignalR;
 using ChatSystem.ErrorHandling;
 namespace ChatSystem.Hubs;

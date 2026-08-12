@@ -3,11 +3,11 @@ using ChatSystem.DTOs;
 using ChatSystem.ErrorHandling;
 using ChatSystem.Models;
 using System.Linq.Expressions;
-using ChatSystem.SystemEvents;
+using ChatSystem.SystemEvents.Chats;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ChatSystem.core;
-namespace ChatSystem.Features.Chats;
+namespace ChatSystem.EventHandler.Chats;
 public static class ChatProjections
 {
     public static Expression<Func<ChatMessage, MessageSummaryDto>> ToSummary()

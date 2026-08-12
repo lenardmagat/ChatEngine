@@ -1,10 +1,10 @@
 using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.ErrorHandling;
-using ChatSystem.SystemEvents;
+using ChatSystem.SystemEvents.Chats;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-namespace ChatSystem.Features.Chats;
+namespace ChatSystem.EventHandler.Chats;
 public class OnConnectAutoJoinCommandHandler : IRequestHandler<IOnConnectAutoJoinChat, Result<string>>
 {
     private readonly DbManager _db;

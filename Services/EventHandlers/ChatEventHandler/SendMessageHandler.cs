@@ -1,4 +1,4 @@
-using ChatSystem.SystemEvents;
+using ChatSystem.SystemEvents.Chats;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ChatSystem.DTOs;
@@ -6,7 +6,7 @@ using ChatSystem.ErrorHandling;
 using ChatSystem.Models;
 using ChatSystem.DataBase;
 using ChatSystem.core;
-namespace ChatSystem.Features.Chats;
+namespace ChatSystem.EventHandler.Chats;
 public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Result<MessageResponseDTO>>
 {
     private readonly IMediator _mediator;
