@@ -33,6 +33,10 @@ public class LoadConversationHandler : IRequestHandler<LoadConversationCommand, 
                         .Where(p => p.UserId != request.UserId)
                         .Select(u => u.UserId)
                         .First(),
+                    recierverName = r.Participants
+                        .Where(p => p.UserId != request.UserId)
+                        .Select(u => u.User.Username)
+                        .First(),
                     LastMessageTimeStampt = r.Messages
                         .Max(m => (DateTime?)m.TimeStamp ?? DateTime.MinValue)
                 }
@@ -48,7 +52,8 @@ public class LoadConversationHandler : IRequestHandler<LoadConversationCommand, 
             (
                 RoomId : _hasher.CreateHashids(convoData.RoomId, HashContext.Room),
                 LastTimeStampt : convoData.LastMessageTimeStampt,//RecentMessages.Select(d => d.TimeStampt).LastOrDefault(),
-                RecieverId : _hasher.CreateHashids(convoData.recieverId, HashContext.User)
+                RecieverId : _hasher.CreateHashids(convoData.recieverId, HashContext.User),
+                ReceiverName : convoData.recierverName
             )
             );
         }

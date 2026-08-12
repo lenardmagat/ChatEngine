@@ -21,7 +21,6 @@ public partial class AppHub
                     await Groups.AddToGroupAsync(Context.ConnectionId, $"Room_{result.Value.RoomId}");
                     await Clients.Caller.SendAsync("ChatId", new
                         {
-                            text = result.Value
                         }
                     );
                 }

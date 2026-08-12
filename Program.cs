@@ -6,7 +6,10 @@ using Serilog;
 var app = Configuration.webApplication();
 app.UseSerilogRequestLogging();
 app.UseWebSockets();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

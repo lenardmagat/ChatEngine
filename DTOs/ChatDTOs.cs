@@ -31,7 +31,8 @@ public record ChatData(
 public record LoadConversationResponse(
     string RoomId,
     DateTime LastTimeStampt,
-    string RecieverId
+    string RecieverId,
+    string ReceiverName
 );
 
 public class MessageSummaryDto
