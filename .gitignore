@@ -5,4 +5,4 @@ Properties/
 appsettings.Development.json
 appsettings.json
 Routers/ForTestingRouters
-.env
+a.env

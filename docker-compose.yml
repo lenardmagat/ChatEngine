@@ -33,6 +33,8 @@ services:
       - Hashids__MinHashLength=${Hashids__MinHashLength}
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=chat-db;Port=5432;Database=chat_system_db;Username=lenard_admin;Password=super_secure_password123
+      - MeiliSearch__Url=${MEILISEARCH__URL}
+      - MeiliSearch__MasterKey=${MEILISEARCH__MASTERKEY}
     depends_on:
       - chat-db
     networks:

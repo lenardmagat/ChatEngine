@@ -15,3 +15,13 @@ public class JwtSettings
     [Required(AllowEmptyStrings = false)]
     public string Audience {get; set;} = string.Empty;
 }
+
+public class MeiliSearchSettings
+{
+    [Required(ErrorMessage = "Meilisearch Host Url is required")]
+    [Url(ErrorMessage = "Meilisearch Host must be a valid URL")]
+    public string Url { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Meilisearch ApiKey is required")]
+    public string MasterKey { get; set; } = string.Empty;
+}

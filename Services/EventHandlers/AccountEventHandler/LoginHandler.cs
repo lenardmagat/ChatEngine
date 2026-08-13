@@ -14,7 +14,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponseDa
     {
         _db = db;
         _hasher = hasher;
-    }
+    }   
     public async Task<Result<LoginResponseData>> Handle(LoginCommand command, CancellationToken cancellation)
     {
         User? user = await _db.Users.FirstOrDefaultAsync(u => u.Username == command.Credentials.Username);
@@ -27,7 +27,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponseDa
             (
                 JwtToken: _hasher.CreateToken(user.UserId),
                 timestamp: DateTime.UtcNow
-            )
+            )   
         );
     }
 }

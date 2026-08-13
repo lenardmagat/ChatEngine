@@ -3,9 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using ChatSystem.DataBase;
 using Microsoft.IdentityModel.Protocols.Configuration;
 using ChatSystem.Services;
-using HashidsNet;
 using ChatSystem.core;
 using ChatSystem.core.KeyConfiguration;
+using Meilisearch;
+using Microsoft.Extensions.Options;
+using ChatSystem.Services.Interfaces;
+using ChatSystem.EventHandler.Search;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -24,6 +27,17 @@ public static class DependenciesInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<IHasher, SystemSecurity>();
+        services.AddOptions<MeiliSearchSettings>()
+            .Bind(configuration.GetSection("MeiliSearch"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddSingleton<MeilisearchClient>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<MeiliSearchSettings>>().Value;
+            return new MeilisearchClient(settings.Url, settings.MasterKey);
+        });
+        services.AddScoped<IDynamicSearchService, DynamicMeiliSearchService>(); 
+        services.AddScoped<ISearchStrategy, UserSearchStrategy>();
         return services;
     }
 }
