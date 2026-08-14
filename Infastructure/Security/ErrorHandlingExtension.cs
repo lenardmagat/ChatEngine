@@ -22,7 +22,7 @@ namespace ChatSystem.ErrorHandling.Extension
         public static IActionResult ToActionResult<T>(this Result<T> result)
         {
             return result.IsSuccess ? 
-                new ObjectResult(result.Value) :
+                new OkObjectResult(result.Value) :
                 new ObjectResult(
                     new
                     {

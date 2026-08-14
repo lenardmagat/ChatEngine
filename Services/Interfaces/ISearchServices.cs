@@ -15,6 +15,15 @@ public class PagedResult<T>
         Page = page;
         PageSize = pageSize;
     }
+    public PagedResult<TResult> Select<TResult>(Func<T, TResult> map)
+    {
+        return new PagedResult<TResult>(
+            Items?.Select(map).ToList() ?? new List<TResult>(),
+            TotalCount,
+            Page,
+            PageSize
+        );
+    }
 }
 public interface IDynamicSearchService
 {

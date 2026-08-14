@@ -1,21 +1,22 @@
+using ChatSystem.core;
 using ChatSystem.DTOs.Documentation;
 using ChatSystem.DTOs.Search;
 using ChatSystem.ErrorHandling;
 using ChatSystem.Services.Interfaces;
 namespace ChatSystem.EventHandler.Search;
-public class UserSearchStrategy(IDynamicSearchService searchService) : ISearchStrategy
+public class UserSearchStrategy(IDynamicSearchService searchService, IHasher hasher) : ISearchStrategy
 {
     public SearchTarget Target => SearchTarget.Users;
 
     public async Task<PagedResult<object>> SearchAsync(SearchRequest request, CancellationToken cancellationToken)
     {
         string? roleFilter = request.Filters?.GetValueOrDefault("role");
-        PagedResult<UserDocumentation> pagedUsers;
+        PagedResult<UserDocumentation> rawpagedUsers;
         if(!string.IsNullOrWhiteSpace(roleFilter))
         {
-            pagedUsers = await searchService.SearchWithFilterAsync<UserDocumentation>(
+            rawpagedUsers = await searchService.SearchWithFilterAsync<UserDocumentation>(
                 request.Term,
-                $"role = '{roleFilter}",
+                $"role = '{roleFilter}'",
                 request.Page, 
                 request.PageSize, 
                 cancellationToken
@@ -23,13 +24,13 @@ public class UserSearchStrategy(IDynamicSearchService searchService) : ISearchSt
         }
         else
         {
-            pagedUsers = await searchService.SearchAsync<UserDocumentation>(
+            rawpagedUsers = await searchService.SearchAsync<UserDocumentation>(
                 request.Term, 
                 request.Page, 
                 request.PageSize, 
                 cancellationToken);
         }
-        if(pagedUsers is null)
+        if(rawpagedUsers is null)
         {
             return new()
             {
@@ -39,14 +40,22 @@ public class UserSearchStrategy(IDynamicSearchService searchService) : ISearchSt
                 PageSize = 0
             };
         }
-        return CastToObjectMapper(pagedUsers);
+        PagedResult<UserSearchDTOResponse> pagedResult = rawpagedUsers
+            .Select(user => new UserSearchDTOResponse
+                (
+                    hasher.CreateHashids(int.Parse(user.id), HashContext.User),
+                    user.Username
+                )
+            );
+        return CastToObjectMapper(pagedResult);
     }
 
-    private static PagedResult<object> CastToObjectMapper<T>(PagedResult<T> source) where T : class => new()
-    {
-        Items = source.Items!.Cast<object>().ToList(),
-        TotalCount = source.TotalCount,
-        Page = source.Page,
-        PageSize = source.PageSize
-    };
+    private static PagedResult<object> CastToObjectMapper<T>(PagedResult<T> source) where T : class {
+        return new(){
+            Items = source.Items!.Cast<object>().ToList(),
+            TotalCount = source.TotalCount,
+            Page = source.Page,
+            PageSize = source.PageSize
+        };
+    }
 }

@@ -8,7 +8,7 @@ public class UserDocumentationStrategy(IDynamicSearchService Searchservice, DbMa
     public DocumentTarget Target => DocumentTarget.User;
     public async Task DocumentAsync(DocumentRequest request, CancellationToken cancellation = default)
     {
-        var user = await db.Users.FindAsync(new object[]{request.DocumentId}, cancellation);
+        var user = await db.Users.FindAsync(new object[]{int.Parse(request.DocumentId)}, cancellation);
         if(user == null)
         {
             await Searchservice.DeleteFromIndexAsync<UserDocumentation>(request.DocumentId, cancellation);

@@ -3,6 +3,7 @@ using System.Security.Authentication;
 using DotNetEnv;
 using ChatSystem.GlobalException;
 using ChatSystem.Injection;
+using System.Text.Json.Serialization;
 namespace ChatSystem.Middleware;
 class Configuration
 {
@@ -67,6 +68,11 @@ class Configuration
         {
             options.PayloadSerializerOptions.PropertyNamingPolicy = null; // Forces exact string casing matching
         });
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
         return builder.Build();
     }
 }

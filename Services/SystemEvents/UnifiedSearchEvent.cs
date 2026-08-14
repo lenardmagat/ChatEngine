@@ -8,8 +8,10 @@ public static class UnifiedSearch
 {
     public record Query(SearchRequest Request) : IRequest<Result<PagedResult<object>>>;
 
-    public class Handler(IEnumerable<ISearchStrategy> strategies) 
-        : IRequestHandler<Query, Result<PagedResult<object>>>
+    public class Handler(
+        IEnumerable<ISearchStrategy> strategies,
+        ILogger<Handler> logger) 
+            : IRequestHandler<Query, Result<PagedResult<object>>>
     {
         private readonly Dictionary<SearchTarget, ISearchStrategy> _strategyMap = 
             strategies.ToDictionary(s => s.Target);
@@ -26,7 +28,8 @@ public static class UnifiedSearch
                 return Result<PagedResult<object>>.Success(await strategy.SearchAsync(req, cancellationToken));
             }catch(Exception e)
             {
-                return Result<PagedResult<object>>.Failure(e.Message, e.GetHashCode());
+                logger.LogError(e,  "Error occurred while handling search request for target {Target}", query.Request.Target);
+                return Result<PagedResult<object>>.Failure(e.Message, StatusCodes.Status500InternalServerError);
             }
         }
     }

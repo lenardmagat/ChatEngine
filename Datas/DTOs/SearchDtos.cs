@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 namespace ChatSystem.DTOs.Search;
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SearchTarget
 {
     Users,
@@ -14,10 +16,7 @@ public record SearchRequest(
     int PageSize = 10,
     Dictionary<string, string>? Filters = null
 );
-
-
-public record UserDto(
-    string Username,
-    string role,
-    bool Status
+public record UserSearchDTOResponse(
+    string Id,
+    string Name
 );

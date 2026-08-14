@@ -53,9 +53,18 @@ public class DynamicMeiliSearchService : IDynamicSearchService
     public async Task IndexAsync<T>(T document, CancellationToken CancellationToken = default) where T : class
     {
         string IndexName = typeof(T).Name.ToLower();
+        try
+        {   
+            await _client.GetIndexAsync(IndexName, CancellationToken);
+        }
+        catch (MeilisearchApiError ex) when (ex.Code == "index_not_found")
+        {
+            await _client.CreateIndexAsync(IndexName, primaryKey: "id", cancellationToken: CancellationToken);
+        }
         var index = _client.Index(IndexName);
-        await index.AddDocumentsAsync(new[] {document}, cancellationToken: CancellationToken);
-    }   
+        var task = await index.AddDocumentsAsync(new[] {document}, cancellationToken: CancellationToken);
+        await index.WaitForTaskAsync(task.TaskUid, cancellationToken: CancellationToken);
+    } 
     public async Task DeleteFromIndexAsync<T>(string documentId, CancellationToken cancellationToken = default) where T : class
     {
         string IndexName = typeof(T).Name.ToLower();

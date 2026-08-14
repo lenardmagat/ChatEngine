@@ -3,11 +3,13 @@ using ChatSystem.ErrorHandling;
 using ChatSystem.Services.Interfaces;
 using MediatR;
 namespace ChatSystem.SystemEvents.Documentation;
-public class UnifiedDocument
-{
+public class UnifiedDocument{
     public record DocumentationCommand(DocumentRequest request) : IRequest<Result>;
-    public class Handler(IEnumerable<IDocumentStrategy> strategies) 
-        : IRequestHandler<DocumentationCommand, Result>
+    public class Handler(
+        IEnumerable<IDocumentStrategy> strategies,
+        ILogger<Handler> logger
+        ) 
+            : IRequestHandler<DocumentationCommand, Result>
     {
         private readonly Dictionary<DocumentTarget, IDocumentStrategy> _strategies
             = strategies.ToDictionary(s => s.Target);
@@ -24,7 +26,8 @@ public class UnifiedDocument
                 return Result.Success();
             }catch(Exception e)
             {
-                return Result.Failure("Unexpected Error occured in the server", StatusCodes.Status500InternalServerError);
+                logger.LogError(e, "Error occurred while handling document request for target {Target}", document.request.Target);
+                return Result.Failure("An Unexpected Internal Server Occured", StatusCodes.Status500InternalServerError);
             }
         }
     }
