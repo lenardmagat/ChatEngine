@@ -9,6 +9,8 @@ using Meilisearch;
 using Microsoft.Extensions.Options;
 using ChatSystem.Services.Interfaces;
 using ChatSystem.EventHandler.Search;
+using ChatSystem.EventHandler.Documentation;
+using ChatSystem.BackgroundServices.MeiliSync;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -38,6 +40,8 @@ public static class DependenciesInjection
         });
         services.AddScoped<IDynamicSearchService, DynamicMeiliSearchService>(); 
         services.AddScoped<ISearchStrategy, UserSearchStrategy>();
+        services.AddScoped<IDocumentStrategy, UserDocumentationStrategy>();
+        services.AddHostedService<MeiliSyncWorker>();
         return services;
     }
 }
