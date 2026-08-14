@@ -15,7 +15,7 @@ public class UserSearchStrategy(IDynamicSearchService searchService) : ISearchSt
         {
             pagedUsers = await searchService.SearchWithFilterAsync<UserDocumentation>(
                 request.Term,
-                roleFilter,
+                $"role = '{roleFilter}",
                 request.Page, 
                 request.PageSize, 
                 cancellationToken

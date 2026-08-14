@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace ChatSystem.Routers.Account;
 public partial class AccountController
 {
-    [Authorize]
     [HttpPost("Create")]
     public async Task<IActionResult> CreateAccountEndpoint(
             [FromBody] AccountCredentials accountCredentials,

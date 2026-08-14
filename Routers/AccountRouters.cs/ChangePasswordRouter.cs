@@ -2,10 +2,12 @@ using ChatSystem.ErrorHandling;
 using ChatSystem.ErrorHandling.Extension;
 using ChatSystem.Extensions;
 using ChatSystem.SystemEvents.Accounts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace ChatSystem.Routers.Account;
 public partial class AccountController
 {
+    [Authorize]
     [HttpPatch("AccountUpdate-ChangePassword")]
     public async Task<IActionResult> ChangePasswordEndPoint(
         [FromBody] PasswordCredentials passwordCredentials,
