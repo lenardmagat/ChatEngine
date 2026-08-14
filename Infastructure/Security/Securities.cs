@@ -51,7 +51,7 @@ public interface IHasher
     
     public string CreateToken(int Userid)
         {
-            DotNetEnv.Env.Load();
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(__JWTKeyString));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var claims = new[]

@@ -4,6 +4,8 @@ using DotNetEnv;
 using ChatSystem.GlobalException;
 using ChatSystem.Injection;
 using System.Text.Json.Serialization;
+using ChatSystem.HubExcept;
+using Microsoft.AspNetCore.SignalR;
 namespace ChatSystem.Middleware;
 class Configuration
 {
@@ -16,9 +18,11 @@ class Configuration
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.File("Logs/chat_log-.txt", rollingInterval: RollingInterval.Day)
             .CreateLogger();
-        builder.Services.AddControllers(options => options.Filters.Add<GlobalExceptionFilter>());
+            
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Host.UseSerilog();
-         var JWTKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidCredentialException("");
+         var JWTKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidCredentialException("Jwt:Key configuration is missing");
+        builder.Services.AddProblemDetails();
         builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
@@ -53,7 +57,8 @@ class Configuration
                         // ADD THIS TO EXPOSE THE HIDDEN EXCEPTION:
                         OnAuthenticationFailed = context =>
                         {
-                            Console.WriteLine($"[🚨 AUTH FAILED] Exception message: {context.Exception.Message}");
+                            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                            logger.LogWarning(context.Exception, "JWT authentication failed");
                             return Task.CompletedTask;
                         }
                     };
@@ -62,7 +67,8 @@ class Configuration
         builder.Services.AddApplicationServices(builder.Configuration);
         builder.Services.AddSignalR(options =>
         {
-            options.EnableDetailedErrors = true;
+            options.EnableDetailedErrors = builder.Environment.IsDevelopment(); // don't leak stack traces to clients in prod
+            options.AddFilter<HubExceptionFilter>();
         }
         ).AddJsonProtocol(options => 
         {
