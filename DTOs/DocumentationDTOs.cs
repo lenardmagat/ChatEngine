@@ -9,7 +9,7 @@ public record DocumentRequest(
     DocumentTarget Target
 );
 public record UserDocumentation(
-    string UserId,
+    string id,
     string Username,
     string role,
     bool Status
