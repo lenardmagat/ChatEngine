@@ -1,3 +1,4 @@
+using ChatSystem.DTOs.Documentation;
 using ChatSystem.DTOs.Search;
 using ChatSystem.ErrorHandling;
 using ChatSystem.Services.Interfaces;
@@ -9,10 +10,10 @@ public class UserSearchStrategy(IDynamicSearchService searchService) : ISearchSt
     public async Task<PagedResult<object>> SearchAsync(SearchRequest request, CancellationToken cancellationToken)
     {
         string? roleFilter = request.Filters?.GetValueOrDefault("role");
-        PagedResult<UserDto> pagedUsers;
+        PagedResult<UserDocumentation> pagedUsers;
         if(!string.IsNullOrWhiteSpace(roleFilter))
         {
-            pagedUsers = await searchService.SearchWithFilterAsync<UserDto>(
+            pagedUsers = await searchService.SearchWithFilterAsync<UserDocumentation>(
                 request.Term,
                 roleFilter,
                 request.Page, 
@@ -22,7 +23,7 @@ public class UserSearchStrategy(IDynamicSearchService searchService) : ISearchSt
         }
         else
         {
-            pagedUsers = await searchService.SearchAsync<UserDto>(
+            pagedUsers = await searchService.SearchAsync<UserDocumentation>(
                 request.Term, 
                 request.Page, 
                 request.PageSize, 

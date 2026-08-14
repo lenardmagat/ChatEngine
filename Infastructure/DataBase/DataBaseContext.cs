@@ -8,6 +8,7 @@ public class DbManager : DbContext
     public DbSet<ChatRoom> Chatrooms {get; set;} = null!;
     public DbSet<RoomParticipant> participants {get; set;} = null!;
     public DbSet<TradeOffer> offers {get; set;} = null!;
+    public DbSet<OutboxEntry> OutboxEntries {get; set;} = null!;
     public  DbManager(DbContextOptions<DbManager> options) : base(options){}
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

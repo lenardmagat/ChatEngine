@@ -1,5 +1,3 @@
-using ChatSystem.Models;
-
 namespace ChatSystem.DTOs.Search;
 public enum SearchTarget
 {
@@ -8,13 +6,15 @@ public enum SearchTarget
     Channels,
     Products
 }
+
 public record SearchRequest(
     string Term,
     SearchTarget Target,
     int Page = 1,
     int PageSize = 10,
-    Dictionary<string, string>? Filters = null // e.g. {"role": "Admin", "minPrice": "100"}
+    Dictionary<string, string>? Filters = null
 );
+
 
 public record UserDto(
     string Username,

@@ -49,4 +49,17 @@ public class DynamicMeiliSearchService : IDynamicSearchService
 
         return new PagedResult<T> { Items = new List<T>(), TotalCount = 0, Page = page, PageSize = pageSize };
     }
+
+    public async Task IndexAsync<T>(T document, CancellationToken CancellationToken = default) where T : class
+    {
+        string IndexName = typeof(T).ToString().ToLower();
+        var index = _client.Index(IndexName);
+        await index.AddDocumentsAsync(new[] {document}, cancellationToken: CancellationToken);
+    }   
+    public async Task DeleteFromIndexAsync<T>(string documentId, CancellationToken cancellationToken = default) where T : class
+    {
+        string IndexName = typeof(T).ToString().ToLower();
+        var index = _client.Index(IndexName);
+        await index.DeleteOneDocumentAsync(documentId, cancellationToken: cancellationToken);
+    }
 }
