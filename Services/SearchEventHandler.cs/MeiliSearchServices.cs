@@ -52,13 +52,13 @@ public class DynamicMeiliSearchService : IDynamicSearchService
 
     public async Task IndexAsync<T>(T document, CancellationToken CancellationToken = default) where T : class
     {
-        string IndexName = typeof(T).ToString().ToLower();
+        string IndexName = typeof(T).Name.ToLower();
         var index = _client.Index(IndexName);
         await index.AddDocumentsAsync(new[] {document}, cancellationToken: CancellationToken);
     }   
     public async Task DeleteFromIndexAsync<T>(string documentId, CancellationToken cancellationToken = default) where T : class
     {
-        string IndexName = typeof(T).ToString().ToLower();
+        string IndexName = typeof(T).Name.ToLower();
         var index = _client.Index(IndexName);
         await index.DeleteOneDocumentAsync(documentId, cancellationToken: cancellationToken);
     }

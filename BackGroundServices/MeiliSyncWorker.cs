@@ -12,16 +12,21 @@ public class MeiliSyncWorker(IServiceScopeFactory scopeFactory) : BackgroundServ
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(3));
         while(await timer.WaitForNextTickAsync(stoppingToken))
         {
-            try{
             using var scope =  scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DbManager>();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<MeiliSyncWorker>>();
+            try{
+            
             var pending = await db.OutboxEntries
-                .Where(e => e.ProcessedAt == null)
+                .Where(e => e.ProcessedAt ==null)
                 .OrderBy(e => e.CreatedAt)
                 .Take(100)
                 .ToListAsync();
-            if(pending.Count == 0) continue;
+            if(pending is null){
+                logger.LogInformation("no outbox entry to process");
+                continue;
+            }
             foreach(var entry in pending)
             {
                 DocumentRequest request = new DocumentRequest(entry.EntityId.ToString(), entry.EntityType);
@@ -31,7 +36,7 @@ public class MeiliSyncWorker(IServiceScopeFactory scopeFactory) : BackgroundServ
             await db.SaveChangesAsync();
             }catch(Exception e)
             {
-                
+                logger.LogError(e.Message);
             }
         }
     }
