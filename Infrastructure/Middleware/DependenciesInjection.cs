@@ -11,6 +11,8 @@ using ChatSystem.Services.Interfaces;
 using ChatSystem.EventHandler.Search;
 using ChatSystem.EventHandler.Documentation;
 using ChatSystem.BackgroundServices.MeiliSync;
+using ChatSystem.core.Jwt;
+using ChatSystem.Services.Auth.Jwt;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -41,6 +43,8 @@ public static class DependenciesInjection
         services.AddScoped<IDynamicSearchService, DynamicMeiliSearchService>(); 
         services.AddScoped<ISearchStrategy, UserSearchStrategy>();
         services.AddScoped<IDocumentStrategy, UserDocumentationStrategy>();
+        services.AddScoped<IJwtTokenServices, JwtServices>();
+        services.AddScoped<JWTAuthServices>();
         services.AddHostedService<MeiliSyncWorker>();
         return services;
     }

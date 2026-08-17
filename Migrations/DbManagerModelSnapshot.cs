@@ -100,6 +100,40 @@ namespace WebApplication1.Migrations
                     b.ToTable("Chatrooms");
                 });
 
+            modelBuilder.Entity("ChatSystem.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReplacedByTokenHash")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("ChatSystem.Models.RoomParticipant", b =>
                 {
                     b.Property<int>("Id")
@@ -129,7 +163,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("participants");
+                    b.ToTable("Participants");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.TradeOffer", b =>
@@ -174,7 +208,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("offers");
+                    b.ToTable("Offers");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.User", b =>
@@ -252,6 +286,17 @@ namespace WebApplication1.Migrations
                     b.Navigation("Sender");
 
                     b.Navigation("TradeOffer");
+                });
+
+            modelBuilder.Entity("ChatSystem.Models.RefreshToken", b =>
+                {
+                    b.HasOne("ChatSystem.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.RoomParticipant", b =>

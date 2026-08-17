@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(DbManager))]
-    [Migration("20260810093831_AddTradeOfferIdToChatMessage")]
-    partial class AddTradeOfferIdToChatMessage
+    [Migration("20260817120246_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -132,7 +132,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("participants");
+                    b.ToTable("Participants");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.TradeOffer", b =>
@@ -177,7 +177,7 @@ namespace WebApplication1.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("offers");
+                    b.ToTable("Offers");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.User", b =>
@@ -205,6 +205,31 @@ namespace WebApplication1.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("OutboxEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EntityType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OutboxEntries");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.ChatMessage", b =>
