@@ -6,7 +6,11 @@ using ChatSystem.core.Jwt;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatSystem.Services.Auth.Jwt;
-public class JWTAuthServices
+public interface IAuthServices{
+    public Task<Result<AuthJWTResponse>> IssueTokenAsync(int userId);
+    public Task<Result<AuthJWTResponse>> RefreshTokenAsync(string presentedRawToken);
+}
+public class JWTAuthServices : IAuthServices
 {
     JwtServices _jwtServices;
     DbManager _db;

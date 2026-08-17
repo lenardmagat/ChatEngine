@@ -45,6 +45,7 @@ public static class DependenciesInjection
         services.AddScoped<IDocumentStrategy, UserDocumentationStrategy>();
         services.AddScoped<IJwtTokenServices, JwtServices>();
         services.AddScoped<JWTAuthServices>();
+        services.AddScoped<IAuthServices, JWTAuthServices>();
         services.AddHostedService<MeiliSyncWorker>();
         return services;
     }

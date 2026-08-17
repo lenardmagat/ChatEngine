@@ -1,5 +1,5 @@
 using ChatSystem.ErrorHandling.Extension;
-using ChatSystem.SystemEvents.Accounts;
+using ChatSystem.SystemEvents.Auth;
 using Microsoft.AspNetCore.Mvc;
 namespace ChatSystem.Routers.Account;
 public partial class AccountController

@@ -35,5 +35,11 @@ namespace ChatSystem.ErrorHandling.Extension
                 };
                 
         }
+
+        public static Result ToResult<T> (this Result<T> result, T Object)
+        {
+            return result.IsSuccess ? Result<Object>.Success(result.Value!) : Result<Object>.Failure(result.Error!, result.StatusCode);
+        }
+
     } 
 }
