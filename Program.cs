@@ -4,6 +4,7 @@ using ChatSystem.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 var app = Configuration.webApplication();
+app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
 app.UseWebSockets();
 if (!app.Environment.IsDevelopment())

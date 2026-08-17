@@ -62,7 +62,7 @@ public class JWTAuthServices : IAuthServices
         var (newRaw, newHash) = _jwtServices.GenerateRefreshToken();
         stored.ReplacedByTokenHash =newHash;
         await _db.RefreshTokens.AddAsync(_jwtServices.RefreshTokenFactory(stored.UserId, newHash));
-        var newAccessToken = _jwtServices.CreateAccessToken(stored.Id);
+        var newAccessToken = _jwtServices.CreateAccessToken(stored.UserId);
         await _db.SaveChangesAsync();
         return Result<AuthJWTResponse>.Success(
             new AuthJWTResponse(
