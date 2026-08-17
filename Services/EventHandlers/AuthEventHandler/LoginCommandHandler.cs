@@ -15,9 +15,9 @@ namespace ChatSystem.EventHandler.Auth;
 public class LogInCommandHandler : IRequestHandler<LoginCommand, Result<AuthJWTResponse>>
 {
     private readonly DbManager _db;
-    private readonly JWTAuthServices _authServices;
+    private readonly IAuthServices _authServices;
     private readonly IHasher _hasher;
-    public LogInCommandHandler(DbManager db, JWTAuthServices authServices, IHasher hasher)
+    public LogInCommandHandler(DbManager db, IAuthServices authServices, IHasher hasher)
     {
         _db = db;
         _authServices = authServices;

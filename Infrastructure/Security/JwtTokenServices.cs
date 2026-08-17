@@ -14,6 +14,7 @@ public interface  IJwtTokenServices
     string CreateAccessToken(int userId);
     (string rawToken, string tokenHash) GenerateRefreshToken();
     string HashToken(string rawToken);
+     RefreshToken RefreshTokenFactory(int userId, string hashToken);
 }
 public class JwtServices : IJwtTokenServices
 {

@@ -12,9 +12,9 @@ public interface IAuthServices{
 }
 public class JWTAuthServices : IAuthServices
 {
-    JwtServices _jwtServices;
+    IJwtTokenServices _jwtServices;
     DbManager _db;
-    public JWTAuthServices(JwtServices jwtServices, DbManager db)
+    public JWTAuthServices(IJwtTokenServices jwtServices, DbManager db)
     {
         _jwtServices = jwtServices;
         _db = db;
