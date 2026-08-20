@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ChatSystem.ErrorHandling;
 namespace ChatSystem.Models;
 public enum TradeOfferStatus
 {
@@ -34,5 +35,33 @@ public class TradeOffer
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? RespondedAt { get; set; }
+
+    private static readonly Dictionary<TradeOfferStatus, TradeOfferStatus[]> _allowedTransitions = new()
+    {
+        [TradeOfferStatus.Proposed]   = [
+            TradeOfferStatus.Accepted, 
+            TradeOfferStatus.Declined, 
+            TradeOfferStatus.Cancelled, 
+            TradeOfferStatus.Countered, 
+            TradeOfferStatus.Expired
+            ],
+        [TradeOfferStatus.Accepted] = [
+            TradeOfferStatus.Completed, 
+            TradeOfferStatus.Cancelled
+            ],
+        [TradeOfferStatus.Completed] = [],
+        [TradeOfferStatus.Countered] = [],
+        [TradeOfferStatus.Cancelled] = [],
+        [TradeOfferStatus.Declined] = [],
+        [TradeOfferStatus.Expired] = []
+    };
+    public Result TransitionTo(TradeOfferStatus next)
+    {
+        if (!_allowedTransitions.TryGetValue(Status, out var allowed) || !allowed.Contains(next))
+            return Result.Failure($"Cannot move offer from {Status} to {next}.", 409);
+
+        Status = next;
+        return Result.Success();
+    }
 }
 

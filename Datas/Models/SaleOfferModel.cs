@@ -1,4 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Security;
+using ChatSystem.ErrorHandling;
+using Microsoft.VisualBasic;
 
 namespace ChatSystem.Models;
 public enum SaleOfferStatus
@@ -28,4 +31,36 @@ public class SaleOffer
     public int QuantityRequested {get; set;}
     public decimal PricePerUnit {get; set;}
     public SaleOfferStatus Status {get; set;}
+
+    private static readonly Dictionary<SaleOfferStatus, SaleOfferStatus[]> _AllowedToTransition = new()
+    {
+        [SaleOfferStatus.Proposed] = 
+            [
+                SaleOfferStatus.Accepted, 
+                SaleOfferStatus.Countered, 
+                SaleOfferStatus.Declined, 
+                SaleOfferStatus.Cancelled, 
+                SaleOfferStatus.Expired
+            ],
+        [SaleOfferStatus.Accepted] = 
+            [
+                SaleOfferStatus.Completed, 
+                SaleOfferStatus.Cancelled
+            ],
+        [SaleOfferStatus.Countered] = [],
+        [SaleOfferStatus.Declined]  = [],
+        [SaleOfferStatus.Cancelled] = [],
+        [SaleOfferStatus.Expired]   = [],
+        [SaleOfferStatus.Completed] = []
+    };
+
+    public Result TransitionTo(SaleOfferStatus next)
+    {
+        if(!_AllowedToTransition.TryGetValue(Status, out var allowed) || !allowed.Contains(next))
+        {
+            return Result.Failure($"Cannot move offer from {Status} to {next}.", 409);
+        }
+        Status = next;
+        return Result.Success();
+    }
 }
