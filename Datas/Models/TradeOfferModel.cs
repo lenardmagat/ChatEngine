@@ -8,6 +8,7 @@ public enum TradeOfferStatus
     Accepted,
     Declined,
     Cancelled,
+    Expired,
     Completed
 }
 

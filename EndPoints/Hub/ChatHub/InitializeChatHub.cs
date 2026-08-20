@@ -19,10 +19,7 @@ public partial class AppHub
                 if(!result.Value!.IsNew)
                 {
                     await Groups.AddToGroupAsync(Context.ConnectionId, $"Room_{result.Value.RoomId}");
-                    await Clients.Caller.SendAsync("ChatId", new
-                        {
-                        }
-                    );
+                    await Clients.Caller.SendAsync("ChatId", result);
                 }
                 else
                 {
