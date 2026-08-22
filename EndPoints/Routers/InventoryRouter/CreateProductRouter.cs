@@ -18,6 +18,6 @@ public partial class InventoryController
         int UserId = User.GetUserId()!.Value;
         CreateProductCommand productCommand = new(UserId, productDetails);
         var result = await _mediator.Send(productCommand, cancellationToken);
-        return result.ToActionResult();
+        return result.ToActionResult(); 
     }
 }

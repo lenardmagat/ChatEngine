@@ -25,13 +25,13 @@ public class Product
     [MaxLength(500)]
     public string? ProductDescription {get; set;}
 
-    [Range(0, double.MinValue, ErrorMessage = "Base price cannot be negative")]
+    [Range(0, double.MaxValue, ErrorMessage = "Base price cannot be negative")]
     public decimal BasePrice {get; set;}
     [Range(0, int.MinValue, ErrorMessage = "Stock cannot be negative")]
     public int Stock {get; set;}
-    [Range(0, int.MinValue)]
+    [Range(0, int.MaxValue)]
     public int ProductAvailable {get; set;}
-    [Range(0, int.MinValue)]
+    [Range(0, int.MaxValue)]
     public int ReservedProdcut {get; set;}
     public ProductMode Mode{get; set;}
     public bool IsAvailable => ProductAvailable > 0 && Mode != ProductMode.DeclineBoth;

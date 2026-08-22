@@ -22,6 +22,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             User? Owner = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == command.UserId);
             if(Owner is null) return Result.Failure("Credential is not existing", StatusCodes.Status400BadRequest);
             var NewProduct = new Product{
+                    OwnerUserId = Owner.UserId,
                     ProductName = command.Details.Name, 
                     ProductDescription = command.Details.Description,
                     BasePrice = command.Details.Baseprice,
