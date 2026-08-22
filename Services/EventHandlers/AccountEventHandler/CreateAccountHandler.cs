@@ -11,10 +11,12 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
 {
     private readonly DbManager _db;
     private readonly IHasher _hasher;
-    public CreateAccountHandler(DbManager db, IHasher hasher)
+    ILogger<CreateAccountHandler> _logger;
+    public CreateAccountHandler(DbManager db, IHasher hasher, ILogger<CreateAccountHandler> logger)
     {
         _db = db;
         _hasher = hasher;
+        _logger = logger;
     }
     public async Task<Result> Handle(CreateAccountCommand command, CancellationToken cancellation)
     {
@@ -36,6 +38,7 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
             return Result.Success();
         }catch(Exception e)
         {
+            _logger.LogCritical(e, $"An Critical bug occured while processing creating account. Details: {command.Credentials}");
             return Result.Failure("An unexcepted Error occured in the server", StatusCodes.Status500InternalServerError);
         }
     }

@@ -14,7 +14,8 @@ public enum HashContext
     User,
     Room,
     Message,
-    Participant
+    Participant,
+    Product
 }
 public interface IHasher
 {
@@ -30,6 +31,7 @@ public interface IHasher
         private readonly IHashids _MessageHashids;
         private readonly IHashids _RoomHashids;
         private readonly IHashids _ParticipantHahids;
+        private readonly IHashids _ProductHashids;
         private readonly string __JWTKeyString;
         private readonly string __IssuerKeyString;
         private readonly string __AudienceKeyString;
@@ -43,6 +45,7 @@ public interface IHasher
             _RoomHashids = new Hashids($"{hashidsOptions.Value.HasherSalt}_RoomsContext", hashidsOptions.Value.MinHashLength);
             _ParticipantHahids = new Hashids($"{hashidsOptions.Value.HasherSalt}_ParticipantContext", hashidsOptions.Value.MinHashLength);
             _MessageHashids = new Hashids($"{hashidsOptions.Value.HasherSalt}_MessageContext", hashidsOptions.Value.MinHashLength);
+            _ProductHashids = new Hashids($"{hashidsOptions.Value.HasherSalt}_ProductContext", hashidsOptions.Value.MinHashLength);
         }
     public string HashPassword(string password)
         => BCryptTool.HashPassword(password, workFactor: 12);
@@ -77,6 +80,7 @@ public interface IHasher
         HashContext.Room => _RoomHashids.Encode(Id),
         HashContext.Message => _MessageHashids.Encode(Id),
         HashContext.Participant => _ParticipantHahids.Encode(Id),
+        HashContext.Product => _ProductHashids.Encode(Id),
         _ => _UserHashids.Encode(Id)
     };
     public Result<int> DecodeHashids(string hash, HashContext hashContext)
@@ -90,6 +94,7 @@ public interface IHasher
                 HashContext.Room => _RoomHashids,
                 HashContext.Message => _MessageHashids,
                 HashContext.Participant => _ParticipantHahids,
+                HashContext.Product => _ProductHashids,
                 _ => _UserHashids
             };
             if(!hashidInstance.TryDecodeSingle(hash, out int decoded) || decoded == 0) 

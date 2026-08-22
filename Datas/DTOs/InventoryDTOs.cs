@@ -15,12 +15,15 @@ public record ProductDetails
 
 public record UpdateProductDetails
 (
-    string Name,
-    string? Description
+    string ProductId,
+    string NewName,
+    string? NewDescription,
+    string UserPassword
 );
 public record UpdateProductStatus
 (
-    ProductMode Mode, 
+    string ProductId,
+    ProductMode NewMode, 
     [Range(0, int.MinValue, ErrorMessage = "Stock cannot be negative")]
     int NewStock,
     string UserPassword
