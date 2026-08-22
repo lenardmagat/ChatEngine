@@ -1,7 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ChatSystem.Models;
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ProductMode
+{
+    ForSaleOnly,
+    ForTradeOnly,
+    AcceptsBoth,
+    DeclineBoth
+}
 public class Product
 {
     [Key]
@@ -18,14 +27,14 @@ public class Product
 
     [Range(0, double.MinValue, ErrorMessage = "Base price cannot be negative")]
     public decimal BasePrice {get; set;}
-    [Range(0, int.MinValue, ErrorMessage = "Quantity cannot be negative")]
-    public int ProductQuantity {get; set;}
+    [Range(0, int.MinValue, ErrorMessage = "Stock cannot be negative")]
+    public int Stock {get; set;}
+    [Range(0, int.MinValue)]
+    public int ProductAvailable {get; set;}
     [Range(0, int.MinValue)]
     public int ReservedProdcut {get; set;}
-    public bool IsForSale {get; set;}
-    public bool IsForTrade {get; set;}
-    public bool IsAvailable => ProductQuantity > 0 && IsActive;
-    public bool IsActive {get; set;}
+    public ProductMode Mode{get; set;}
+    public bool IsAvailable => ProductAvailable > 0 && Mode != ProductMode.DeclineBoth;
     public DateTime CreatedAt = DateTime.UtcNow;
     public DateTime? UpdatedA {get; set;}
 }
