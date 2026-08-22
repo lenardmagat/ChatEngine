@@ -11,6 +11,7 @@ public class DbManager : DbContext
     public DbSet<OutboxEntry> OutboxEntries {get; set;} = null!;
     public DbSet<RefreshToken> RefreshTokens {get; set;} = null!;
     public DbSet<SaleOffer> SaleOffers {get; set;} = null!;
+    public DbSet<Product> Products {get; set;} = null!;
     public  DbManager(DbContextOptions<DbManager> options) : base(options){}
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
