@@ -9,12 +9,10 @@ using ChatSystem.core;
 namespace ChatSystem.EventHandler.Chats;
 public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Result<MessageResponseDTO>>
 {
-    private readonly IMediator _mediator;
     private readonly DbManager _db;
     private readonly IHasher _hasher;
     public SendMessageCommandHandler(IMediator mediator, DbManager db, IHasher hasher)
     {
-        _mediator = mediator;
         _db = db;
         _hasher = hasher;
     }

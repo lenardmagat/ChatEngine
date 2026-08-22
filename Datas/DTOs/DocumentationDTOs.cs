@@ -3,6 +3,7 @@ public enum DocumentTarget
 {
     User,
     Message,
+    Product
 }
 public record DocumentRequest(
     string DocumentId,
