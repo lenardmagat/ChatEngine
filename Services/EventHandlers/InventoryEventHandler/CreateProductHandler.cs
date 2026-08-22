@@ -34,7 +34,9 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             using var Transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
             await _db.Products.AddAsync(NewProduct, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
-            await _db.OutboxEntries.AddAsync(
+            if(command.Details.Mode != ProductMode.DeclineBoth)
+            {
+                await _db.OutboxEntries.AddAsync(
                 new OutboxEntry
                     {
                         EntityType = DTOs.Documentation.DocumentTarget.Product,
@@ -42,6 +44,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
                     },
                     cancellationToken
                 );
+                }
             await _db.SaveChangesAsync(cancellationToken);
             await Transaction.CommitAsync(cancellationToken);
             return Result.Success();

@@ -43,6 +43,7 @@ public static class DependenciesInjection
         services.AddScoped<IDynamicSearchService, DynamicMeiliSearchService>(); 
         services.AddScoped<ISearchStrategy, UserSearchStrategy>();
         services.AddScoped<IDocumentStrategy, UserDocumentationStrategy>();
+        services.AddScoped<IDocumentStrategy, ProductDocumentationStrategy>();
         services.AddScoped<IJwtTokenServices, JwtServices>();
         services.AddScoped<JWTAuthServices>();
         services.AddScoped<IAuthServices, JWTAuthServices>();

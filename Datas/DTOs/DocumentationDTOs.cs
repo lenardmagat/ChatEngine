@@ -15,3 +15,10 @@ public record UserDocumentation(
     string role,
     bool Status
 );
+
+public record ProductDocumentation(
+    string id,
+    string ProductName,
+    string? ProductDescription,
+    string ProductStatus
+);
