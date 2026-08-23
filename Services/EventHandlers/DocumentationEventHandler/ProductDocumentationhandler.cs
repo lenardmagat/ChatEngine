@@ -21,6 +21,8 @@ public class ProductDocumentationStrategy(DbManager db, IDynamicSearchService se
                     product.Id.ToString(),
                     product.ProductName,
                     product.ProductDescription,
+                    product.BasePrice.ToString(),
+                    product.ProductAvailable.ToString(),
                     product.Mode.ToString()
                 ),
                 cancellationToken

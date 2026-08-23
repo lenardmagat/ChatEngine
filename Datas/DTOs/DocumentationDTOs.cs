@@ -20,5 +20,7 @@ public record ProductDocumentation(
     string id,
     string ProductName,
     string? ProductDescription,
+    string BasePrice,
+    string QuantityAvailable,
     string ProductStatus
 );
