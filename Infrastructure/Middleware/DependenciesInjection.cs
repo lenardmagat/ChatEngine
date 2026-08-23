@@ -13,6 +13,8 @@ using ChatSystem.EventHandler.Documentation;
 using ChatSystem.BackgroundServices.MeiliSync;
 using ChatSystem.core.Jwt;
 using ChatSystem.Services.Auth.Jwt;
+using MediatR;
+using ChatSystem.SystemEvents.Inventory;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -22,6 +24,7 @@ public static class DependenciesInjection
         if(string.IsNullOrEmpty(_DbKey)) throw new InvalidConfigurationException("Data Base connection string is misisng");
         services.AddDbContext<DbManager>(options => options.UseNpgsql(_DbKey));
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(OwnerShipAuthorizationBehaviour<,>));
         services.AddOptions<HashidsSettings>()
             .Bind(configuration.GetSection("Hashids"))
             .ValidateDataAnnotations()

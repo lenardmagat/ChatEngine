@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using ChatSystem.Models;
 
 namespace ChatSystem.DTOs.Inventory;
-public record ProductDetails
+public record ProductDetailsDTO
 (
     string Name,
     string? Description,
@@ -13,18 +14,28 @@ public record ProductDetails
     ProductMode Mode
 );
 
-public record UpdateProductDetails
+public record UpdateProductDetailsDTO
 (
     string ProductId,
     string NewName,
     string? NewDescription,
-    string UserPassword
+    string UserPassword,
+    decimal NewBasePrice,
+    int Quantity,
+    IsAddOrRemove IsAddOrRemove
 );
-public record UpdateProductStatus
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum IsAddOrRemove
+{
+    Add,
+    Remove
+}
+public record UpdateProductStatusDTO
 (
     string ProductId,
     ProductMode NewMode, 
-    [Range(0, int.MinValue, ErrorMessage = "Stock cannot be negative")]
-    int NewStock,
-    string UserPassword
+    [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative")]
+    int Quantity,
+    string UserPassword,
+    IsAddOrRemove AddOrRemove
 );

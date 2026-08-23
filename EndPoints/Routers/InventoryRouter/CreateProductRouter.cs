@@ -11,7 +11,7 @@ public partial class InventoryController
     [Authorize]
     [HttpPost("CreateProduct")]
     public async Task<IActionResult> CreateProduct(
-        [FromBody] ProductDetails productDetails,
+        [FromBody] ProductDetailsDTO productDetails,
         CancellationToken cancellationToken
     )
     {

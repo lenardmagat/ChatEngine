@@ -12,12 +12,16 @@ public partial class InventoryController
     [Authorize]
     [HttpPatch("UpdateProductDetails")]
     public async Task<IActionResult> UpdateProductDetails(
-        [FromBody] UpdateProductDetails details,
+        [FromBody] UpdateProductDetailsDTO details,
         CancellationToken cancellationToken
     )
     {
-        int UserId = User.GetUserId()!.Value;
-        UpdateProductCommand command = new UpdateProductCommand(UserId, details);
+        int userId = User.GetUserId()!.Value;
+        UpdateProductCommand command = new UpdateProductCommand
+        {
+            UserId = userId,
+            Details = details
+        };
         Result result = await _mediator.Send(command, cancellationToken);
         return result.ToActionResult();
     }

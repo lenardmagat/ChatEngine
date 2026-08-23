@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Mail;
 using ChatSystem.core;
 using ChatSystem.DataBase;
@@ -23,28 +24,30 @@ public class UpdateProductDetailsHandler : IRequestHandler<UpdateProductCommand,
     public async Task<Result> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         try{
-            User? owner = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == request.UserId);
-            if(owner is null)
+            var QuantityDelta = request.Details.IsAddOrRemove == IsAddOrRemove.Add ? request.Details.Quantity : -request.Details.Quantity;
+            var productData = await _db.Products
+                .Where(p => p.Id == _hasher.DecodeHashids(request.Details.ProductId, HashContext.Product).Value!)
+                .FirstOrDefaultAsync();
+            if(productData!.Stock + QuantityDelta < 0)
             {
-                return Result.Failure("Invalid Credentials", StatusCodes.Status400BadRequest);
+                return Result.Failure($"You cannot remove {request.Details.Quantity}. Add more quantity or Decline offer to remove product quantity.", StatusCodes.Status400BadRequest);
             }
-            if(!_hasher.VerifyPassword(request.Details.UserPassword, owner.HashedPassword))
-            {
-                return Result.Failure("Wrong Password", StatusCodes.Status400BadRequest);
-            }
-            var DecodedId = _hasher.DecodeHashids(request.Details.ProductId, HashContext.Product);
-            if(!DecodedId.IsSuccess)
-            {
-                return Result.Failure("Tampered or broken Id detected", StatusCodes.Status401Unauthorized);
-            }
-            Product? product = await _db.Products.FindAsync(DecodedId.Value);
-            if(product is null || product.OwnerUserId != request.UserId)
-            {
-                return Result.Failure("Invalid Credentials", StatusCodes.Status401Unauthorized);
-            }
-            product.ProductName = request.Details.NewName;
-            product.ProductDescription = request.Details.NewDescription;
+            using var Transaction = await _db.Database.BeginTransactionAsync();
+            await _db.Products.ExecuteUpdateAsync(s => s
+                .SetProperty(d => d.Stock, d => d.Stock + QuantityDelta)
+                .SetProperty(d => d.ProductAvailable, d => d.ProductAvailable + QuantityDelta)
+                .SetProperty(d => d.ProductDescription, request.Details.NewDescription)
+                .SetProperty(d => d.ProductName, request.Details.NewName)
+                .SetProperty(d => d.BasePrice, request.Details.NewBasePrice)
+            );
+            await _db.OutboxEntries.AddAsync(
+                new OutboxEntry{
+                    EntityId = productData.Id, 
+                    EntityType = DTOs.Documentation.DocumentTarget.Product
+                    }
+                );
             await _db.SaveChangesAsync();
+            await Transaction.CommitAsync();
             return Result.Success();
             }
         catch(Exception e){

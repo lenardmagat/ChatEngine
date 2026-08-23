@@ -15,6 +15,11 @@ class Configuration
         Env.Load();
         builder.Configuration.AddEnvironmentVariables();
         Log.Logger = new LoggerConfiguration()
+        .MinimumLevel.Error()
+        .MinimumLevel.Debug()
+        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+        .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .WriteTo.File("Logs/chat_log-.txt", rollingInterval: RollingInterval.Day)
             .CreateLogger();
