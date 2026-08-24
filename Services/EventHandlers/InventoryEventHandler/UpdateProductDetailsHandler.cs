@@ -33,7 +33,7 @@ public class UpdateProductDetailsHandler : IRequestHandler<UpdateProductCommand,
                 return Result.Failure($"You cannot remove {request.Details.Quantity}. Add more quantity or Decline offer to remove product quantity.", StatusCodes.Status400BadRequest);
             }
             using var Transaction = await _db.Database.BeginTransactionAsync();
-            await _db.Products.ExecuteUpdateAsync(s => s
+            await _db.Products.Where(d => d.Id == productData.Id).ExecuteUpdateAsync(s => s
                 .SetProperty(d => d.Stock, d => d.Stock + QuantityDelta)
                 .SetProperty(d => d.ProductAvailable, d => d.ProductAvailable + QuantityDelta)
                 .SetProperty(d => d.ProductDescription, request.Details.NewDescription)
