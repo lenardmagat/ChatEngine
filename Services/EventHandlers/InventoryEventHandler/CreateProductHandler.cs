@@ -34,17 +34,14 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, Result
             using var Transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
             await _db.Products.AddAsync(NewProduct, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
-            if(command.Details.Mode != ProductMode.DeclineBoth)
-            {
-                await _db.OutboxEntries.AddAsync(
+            await _db.OutboxEntries.AddAsync(
                 new OutboxEntry
-                    {
-                        EntityType = DTOs.Documentation.DocumentTarget.Product,
-                        EntityId = NewProduct.Id
-                    },
-                    cancellationToken
-                );
-                }
+                {
+                    EntityType = DTOs.Documentation.DocumentTarget.Product,
+                    EntityId = NewProduct.Id
+                },
+                cancellationToken
+            );      
             await _db.SaveChangesAsync(cancellationToken);
             await Transaction.CommitAsync(cancellationToken);
             return Result.Success();

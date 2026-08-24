@@ -8,8 +8,7 @@ public enum ProductMode
 {
     ForSaleOnly,
     ForTradeOnly,
-    AcceptsBoth,
-    DeclineBoth
+    AcceptsBoth
 }
 public class Product
 {
@@ -34,7 +33,7 @@ public class Product
     [Range(0, int.MaxValue)]
     public int ReservedProdcut {get; set;}
     public ProductMode Mode{get; set;}
-    public bool IsAvailable => ProductAvailable > 0 && Mode != ProductMode.DeclineBoth;
+    public bool IsAvailable => ProductAvailable > 0;
     public DateTime CreatedAt = DateTime.UtcNow;
     public DateTime? UpdatedA {get; set;}
 }

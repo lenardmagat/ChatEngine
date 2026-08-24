@@ -1,10 +1,27 @@
-ALTER TABLE "Messages" 
-ADD COLUMN IF NOT EXISTS "TradeOfferId" INTEGER NULL,
-ADD COLUMN IF NOT EXISTS "Type" INTEGER NOT NULL DEFAULT 0;INSERT INTO OutboxEntries (Id, EntityType, EntityId, CreatedAt, ProcessedAt)
+SELECT "Id", COUNT(*) 
+FROM "Products" 
+GROUP BY "Id" 
+HAVING COUNT(*) > 1;INSERT INTO Products (
+    Id,
+    OwnerUserId,
+    ProductName,
+    ProductDescription,
+    BasePrice,
+    Stock,
+    ReservedProdcut,
+    UpdatedA,
+    Mode,
+    ProductAvailable
+  )
 VALUES (
     Id:integer,
-    EntityType:integer,
-    EntityId:integer,
-    'CreatedAt:timestamp with time zone',
-    'ProcessedAt:timestamp with time zone'
+    OwnerUserId:integer,
+    'ProductName:character varying',
+    'ProductDescription:character varying',
+    BasePrice:numeric,
+    Stock:integer,
+    ReservedProdcut:integer,
+    'UpdatedA:timestamp with time zone',
+    Mode:integer,
+    ProductAvailable:integer
   );

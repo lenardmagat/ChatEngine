@@ -7,7 +7,7 @@ public class DbManager : DbContext
     public DbSet<ChatMessage> Messages {get; set;} = null!;
     public DbSet<ChatRoom> Chatrooms {get; set;} = null!;
     public DbSet<RoomParticipant> Participants {get; set;} = null!;
-    public DbSet<TradeOffer> Offers {get; set;} = null!;
+    public DbSet<TradeOffer> TradeOffers {get; set;} = null!;
     public DbSet<OutboxEntry> OutboxEntries {get; set;} = null!;
     public DbSet<RefreshToken> RefreshTokens {get; set;} = null!;
     public DbSet<SaleOffer> SaleOffers {get; set;} = null!;

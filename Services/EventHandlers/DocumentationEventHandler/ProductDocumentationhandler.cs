@@ -10,7 +10,7 @@ public class ProductDocumentationStrategy(DbManager db, IDynamicSearchService se
     public async Task DocumentAsync(DocumentRequest request, CancellationToken cancellationToken = default)
     {
         var product = await db.Products.FindAsync(new object[]{int.Parse(request.DocumentId), cancellationToken});
-        if(product == null)
+        if(product == null )
         {
             await searchService.DeleteFromIndexAsync<ProductDocumentation>(request.DocumentId);
         }
@@ -23,7 +23,8 @@ public class ProductDocumentationStrategy(DbManager db, IDynamicSearchService se
                     product.ProductDescription,
                     product.BasePrice.ToString(),
                     product.ProductAvailable.ToString(),
-                    product.Mode.ToString()
+                    product.Mode.ToString(),
+                    product.IsAvailable.ToString()
                 ),
                 cancellationToken
             );

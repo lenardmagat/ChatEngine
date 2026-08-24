@@ -33,9 +33,5 @@ public enum IsAddOrRemove
 public record UpdateProductStatusDTO
 (
     string ProductId,
-    ProductMode NewMode, 
-    [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative")]
-    int Quantity,
-    string UserPassword,
-    IsAddOrRemove AddOrRemove
+    bool NewStatus
 );

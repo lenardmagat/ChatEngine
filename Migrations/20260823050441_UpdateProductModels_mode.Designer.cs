@@ -3,6 +3,7 @@ using System;
 using ChatSystem.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(DbManager))]
-    partial class DbManagerModelSnapshot : ModelSnapshot
+    [Migration("20260823050441_UpdateProductModels_mode")]
+    partial class UpdateProductModels_mode
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -269,8 +272,9 @@ namespace WebApplication1.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("ItemRequestedId")
-                        .HasColumnType("integer");
+                    b.Property<string>("ItemRequested")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int?>("ParentOfferId")
                         .HasColumnType("integer");
@@ -289,15 +293,13 @@ namespace WebApplication1.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ItemRequestedId");
-
                     b.HasIndex("ParentOfferId");
 
                     b.HasIndex("ProposedByUserId");
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("TradeOffers");
+                    b.ToTable("Offers");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.User", b =>
@@ -445,12 +447,6 @@ namespace WebApplication1.Migrations
 
             modelBuilder.Entity("ChatSystem.Models.TradeOffer", b =>
                 {
-                    b.HasOne("ChatSystem.Models.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ItemRequestedId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("ChatSystem.Models.TradeOffer", "ParentOffer")
                         .WithMany()
                         .HasForeignKey("ParentOfferId");
@@ -468,8 +464,6 @@ namespace WebApplication1.Migrations
                         .IsRequired();
 
                     b.Navigation("ParentOffer");
-
-                    b.Navigation("Product");
 
                     b.Navigation("ProposedBy");
 

@@ -22,5 +22,6 @@ public record ProductDocumentation(
     string? ProductDescription,
     string BasePrice,
     string QuantityAvailable,
-    string ProductStatus
+    string ProductStatus,
+    string IsActive
 );

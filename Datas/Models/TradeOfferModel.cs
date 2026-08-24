@@ -29,7 +29,9 @@ public class TradeOffer
     [ForeignKey("ParentOfferId")]
     public TradeOffer? ParentOffer { get; set; }
     public string ItemOffered { get; set; } = null!;
-    public string ItemRequested { get; set; } = null!;
+    public int ItemRequestedId { get; set; }
+    [ForeignKey("ItemRequestedId")]
+    public Product Product {get; set;} = null!;
 
     public TradeOfferStatus Status { get; set; } = TradeOfferStatus.Proposed;
 

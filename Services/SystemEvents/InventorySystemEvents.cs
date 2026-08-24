@@ -18,6 +18,16 @@ public record UpdateProductCommand : IRequest<Result>, IOwnedResourceCommand
     public UpdateProductDetailsDTO Details {get; set;} = null!;
     public string ResourceId => Details.ProductId;
 }
+public record UpdateProductStatusCommand  : IRequest<Result>, IOwnedResourceCommand
+{
+    public int UserId {get; set;}
+    public UpdateProductStatusDTO StatusData {get; set;} = null!;
+    public string ResourceId => StatusData.ProductId;
+}
+
+
+
+
 public class OwnerShipAuthorizationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IOwnedResourceCommand
     where TResponse : Result
