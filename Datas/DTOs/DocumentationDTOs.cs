@@ -23,5 +23,6 @@ public record ProductDocumentation(
     string BasePrice,
     string QuantityAvailable,
     string ProductStatus,
+    string IsAvailable,
     string IsActive
 );

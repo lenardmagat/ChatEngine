@@ -24,7 +24,8 @@ public class ProductDocumentationStrategy(DbManager db, IDynamicSearchService se
                     product.BasePrice.ToString(),
                     product.ProductAvailable.ToString(),
                     product.Mode.ToString(),
-                    product.IsAvailable.ToString()
+                    product.IsAvailable.ToString(),
+                    product.IsActive.ToString()
                 ),
                 cancellationToken
             );

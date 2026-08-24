@@ -34,6 +34,7 @@ public class Product
     public int ReservedProdcut {get; set;}
     public ProductMode Mode{get; set;}
     public bool IsAvailable => ProductAvailable > 0;
+    public bool IsActive {get; set;}
     public DateTime CreatedAt = DateTime.UtcNow;
     public DateTime? UpdatedA {get; set;}
 }

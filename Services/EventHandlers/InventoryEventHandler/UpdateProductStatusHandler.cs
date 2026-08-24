@@ -1,3 +1,4 @@
+using System.Diagnostics.Tracing;
 using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.DTOs.Inventory;
@@ -25,8 +26,22 @@ public class UpdateProductStatusHandler : IRequestHandler<UpdateProductStatusCom
     {
         int productId = _hasher.DecodeHashids(details.ResourceId, HashContext.Product).Value;
         var product = await _db.Products.Where(d => d.Id == productId).FirstOrDefaultAsync(cancellationToken);
+        if(product!.IsActive == details.StatusData.NewStatus)
+        {
+            if(product.IsActive){
+                return Result.Failure($"The product is already Active", StatusCodes.Status400BadRequest);
+            }
+            else
+            {
+                return Result.Failure($"The product is already In active", StatusCodes.Status400BadRequest);
+            }
+        }
         using var Transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
-        await _db.Products.Where(d => d.Id == productId).ExecuteUpdateAsync(d => d.SetProperty(setter => setter.IsAvailable, details.StatusData.NewStatus), cancellationToken);
+        await _db.Products.Where(d => d.Id == productId).ExecuteUpdateAsync(
+            d => d.SetProperty(
+                setter => setter.IsActive, details.StatusData.NewStatus)
+                , cancellationToken
+                );
         if(details.StatusData.NewStatus == false)
         {
             switch (product!.Mode)
@@ -60,6 +75,7 @@ public class UpdateProductStatusHandler : IRequestHandler<UpdateProductStatusCom
             }
         }
         await _db.OutboxEntries.AddAsync(new OutboxEntry{EntityId = product!.Id, EntityType = DTOs.Documentation.DocumentTarget.Product});
+        await _db.SaveChangesAsync();
         await Transaction.CommitAsync();
         return Result.Success();
     }

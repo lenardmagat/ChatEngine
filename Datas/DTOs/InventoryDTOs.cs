@@ -33,5 +33,5 @@ public enum IsAddOrRemove
 public record UpdateProductStatusDTO
 (
     string ProductId,
-    bool NewStatus
+    bool NewStatus 
 );
