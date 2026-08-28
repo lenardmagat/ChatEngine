@@ -25,6 +25,12 @@ public record UpdateProductStatusCommand  : IRequest<Result>, IOwnedResourceComm
     public string ResourceId => StatusData.ProductId;
 }
 public record GetUserProductSummaryCommand(int UserId) : IRequest<Result<List<ProductSummaryDto>>>;
+public record GetProductDetailsCommand : IRequest<Result<ProductDetailDto>>, IOwnedResourceCommand
+{
+    public int UserId {get; set;}
+    public string ItemId {get; set;} = null!;
+    public string ResourceId => ItemId;
+}
 
 
 
