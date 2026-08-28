@@ -66,7 +66,7 @@ public class DynamicMeiliSearchService : IDynamicSearchService
                 var fitlerTask = await newIndex.UpdateFilterableAttributesAsync(
                     new[]
                     {
-                        "IsActive", "IsAvailable", "productStatus"
+                        "isActive", "isAvailable", "productStatus"
                     },
                     CancellationToken
                 );

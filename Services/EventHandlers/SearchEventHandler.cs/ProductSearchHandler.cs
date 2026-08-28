@@ -24,25 +24,13 @@ public class ProductSearchStrategy : ISearchStrategy
             : $"productStatus = '{typeFilter}' AND isActive = 'True' AND isAvailable = 'True'";
         _logger.LogInformation("Built filter: {Filter}", meiliFilter);
         PagedResult<ProductDocumentation> rawpagedProduct;
-        if (!string.IsNullOrWhiteSpace(typeFilter))
-        {
-            rawpagedProduct = await _searchService.SearchWithFilterAsync<ProductDocumentation>(
-                request.Term,
-                meiliFilter,
-                request.Page,
-                request.PageSize,
-                cancellationToken
-            );
-        }
-        else
-        {
-            rawpagedProduct = await _searchService.SearchAsync<ProductDocumentation>(
-                request.Term,
-                request.Page,
-                request.PageSize,
-                cancellationToken
-            );
-        }
+        rawpagedProduct = await _searchService.SearchWithFilterAsync<ProductDocumentation>(
+            request.Term,
+            meiliFilter,
+            request.Page,
+            request.PageSize,
+            cancellationToken
+        );
         if(rawpagedProduct is null)
         {
             return new()
