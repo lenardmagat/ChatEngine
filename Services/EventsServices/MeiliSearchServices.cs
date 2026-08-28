@@ -1,5 +1,6 @@
 using Meilisearch;
 using ChatSystem.Services.Interfaces;
+using ChatSystem.DTOs.Documentation;
 namespace ChatSystem.Services;
 public class DynamicMeiliSearchService : IDynamicSearchService
 {
@@ -59,7 +60,20 @@ public class DynamicMeiliSearchService : IDynamicSearchService
         }
         catch (MeilisearchApiError ex) when (ex.Code == "index_not_found")
         {
-            await _client.CreateIndexAsync(IndexName, primaryKey: "id", cancellationToken: CancellationToken);
+            var createTask = await _client.CreateIndexAsync(IndexName, primaryKey: "id", cancellationToken: CancellationToken);
+            await _client.WaitForTaskAsync(createTask.TaskUid, cancellationToken: CancellationToken);
+            if(typeof(T) == typeof(ProductDocumentation))
+            {
+                var newIndex = _client.Index(IndexName);
+                var fitlerTask = await newIndex.UpdateFilterableAttributesAsync(
+                    new[]
+                    {
+                        "IsActive", "IsAvailable", "productStatus"
+                    },
+                    CancellationToken
+                );
+                await _client.WaitForTaskAsync(fitlerTask.TaskUid, cancellationToken: CancellationToken);
+            }
         }
         var index = _client.Index(IndexName);
         var task = await index.AddDocumentsAsync(new[] {document}, cancellationToken: CancellationToken);

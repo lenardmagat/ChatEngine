@@ -20,3 +20,10 @@ public record UserSearchDTOResponse(
     string Id,
     string Name
 );
+public record ProductSearchDTOResponse(
+    string Id,
+    string ProductName,
+    decimal BasePrice,
+    int QuantityAvailable,
+    string ProductStatus
+);
