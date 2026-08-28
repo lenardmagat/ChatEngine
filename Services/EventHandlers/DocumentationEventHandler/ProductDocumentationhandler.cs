@@ -9,7 +9,7 @@ public class ProductDocumentationStrategy(DbManager db, IDynamicSearchService se
     public DocumentTarget Target =>  DocumentTarget.Product;
     public async Task DocumentAsync(DocumentRequest request, CancellationToken cancellationToken = default)
     {
-        var product = await db.Products.FindAsync(new object[]{int.Parse(request.DocumentId), cancellationToken});
+        var product = await db.Products.FindAsync(new object[]{int.Parse(request.DocumentId)}, cancellationToken);
         if(product == null )
         {
             await searchService.DeleteFromIndexAsync<ProductDocumentation>(request.DocumentId);
