@@ -24,7 +24,7 @@ public record UpdateProductStatusCommand  : IRequest<Result>, IOwnedResourceComm
     public UpdateProductStatusDTO StatusData {get; set;} = null!;
     public string ResourceId => StatusData.ProductId;
 }
-
+public record GetUserProductSummaryCommand(int UserId) : IRequest<Result<List<ProductSummaryDto>>>;
 
 
 
