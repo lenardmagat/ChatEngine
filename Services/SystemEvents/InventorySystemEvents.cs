@@ -50,7 +50,7 @@ public class OwnerShipAuthorizationBehaviour<TRequest, TResponse> : IPipelineBeh
         var DecodedHashId = _hasher.DecodeHashids(request.ResourceId, HashContext.Product);
         if (!DecodedHashId.IsSuccess)
         {
-            return (TResponse)(object)Result.Failure("Tampered or Broken Id detected", StatusCodes.Status401Unauthorized);
+            return CreateFailureResponse("Tampered or Broken Id detected", StatusCodes.Status401Unauthorized);
         }
         var ownerId = await _db.Products
             .Where(p => p.Id == DecodedHashId.Value)
@@ -58,9 +58,22 @@ public class OwnerShipAuthorizationBehaviour<TRequest, TResponse> : IPipelineBeh
             .FirstOrDefaultAsync();
         if(ownerId != request.UserId)
         {
-            return (TResponse)(object)Result.Failure("You do not own this resource", StatusCodes.Status401Unauthorized);
+            return CreateFailureResponse("You do not own this resource", StatusCodes.Status401Unauthorized);
         }
         return await next();
                 
     }
+    private static TResponse CreateFailureResponse(string message, int statusCode)
+{
+    if (typeof(TResponse).IsGenericType && typeof(TResponse).GetGenericTypeDefinition() == typeof(Result<>))
+    {
+        var resultType = typeof(TResponse).GetGenericArguments()[0];
+        var failureMethod = typeof(Result<>)
+            .MakeGenericType(resultType)
+            .GetMethod("Failure", new[] { typeof(string), typeof(int) });
+
+        return (TResponse)failureMethod!.Invoke(null, new object[] { message, statusCode })!;
+    }
+    return (TResponse)(object)Result.Failure(message, statusCode);
+}
 }
