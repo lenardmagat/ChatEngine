@@ -25,6 +25,18 @@ public class PagedResult<T>
         );
     }
 }
+public static class PageResultExtensions
+{
+    public static PagedResult<Object> CastToObjectMapper<T> (this PagedResult<T> source) where T: class
+    {
+        return new(){
+            Items = source.Items!.Cast<object>().ToList(),
+            TotalCount = source.TotalCount,
+            Page = source.Page,
+            PageSize = source.PageSize
+        };
+    }
+}
 public interface IDynamicSearchService
 {
     Task<PagedResult<T>> SearchAsync<T>(

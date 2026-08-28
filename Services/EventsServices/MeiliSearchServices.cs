@@ -5,8 +5,6 @@ namespace ChatSystem.Services;
 public class DynamicMeiliSearchService : IDynamicSearchService
 {
     private readonly MeilisearchClient _client;
-
-    // Dependency Injection provides the MeilisearchClient SDK instance here
     public DynamicMeiliSearchService(MeilisearchClient client)
     {
         _client = client;

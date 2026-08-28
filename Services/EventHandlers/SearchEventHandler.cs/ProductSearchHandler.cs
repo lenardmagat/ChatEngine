@@ -61,15 +61,6 @@ public class ProductSearchStrategy : ISearchStrategy
                 int.Parse(d.QuantityAvailable),
                 d.ProductStatus
             ));
-        return CastToObjectMapper(pagedResult);
-
-    }
-    private static PagedResult<object> CastToObjectMapper<T>(PagedResult<T> source) where T : class {
-        return new(){
-            Items = source.Items!.Cast<object>().ToList(),
-            TotalCount = source.TotalCount,
-            Page = source.Page,
-            PageSize = source.PageSize
-        };
+        return pagedResult.CastToObjectMapper();
     }
 }

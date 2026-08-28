@@ -1,7 +1,6 @@
 using ChatSystem.core;
 using ChatSystem.DTOs.Documentation;
 using ChatSystem.DTOs.Search;
-using ChatSystem.ErrorHandling;
 using ChatSystem.Services.Interfaces;
 namespace ChatSystem.EventHandler.Search;
 public class UserSearchStrategy(IDynamicSearchService searchService, IHasher hasher) : ISearchStrategy
@@ -47,15 +46,6 @@ public class UserSearchStrategy(IDynamicSearchService searchService, IHasher has
                     user.Username
                 )
             );
-        return CastToObjectMapper(pagedResult);
-    }
-
-    private static PagedResult<object> CastToObjectMapper<T>(PagedResult<T> source) where T : class {
-        return new(){
-            Items = source.Items!.Cast<object>().ToList(),
-            TotalCount = source.TotalCount,
-            Page = source.Page,
-            PageSize = source.PageSize
-        };
+        return pagedResult.CastToObjectMapper();
     }
 }
