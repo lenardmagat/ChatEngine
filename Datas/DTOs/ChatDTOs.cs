@@ -19,7 +19,7 @@ public enum OfferStatus
 public record OfferPayload(
     OfferTye Tye,
     OfferStatus Status,
-    int ItemId
+    int offerId
 );
 public record SendMessage(
     string? RoomId,

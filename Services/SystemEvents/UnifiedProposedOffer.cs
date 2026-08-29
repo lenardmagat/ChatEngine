@@ -1,12 +1,19 @@
 using ChatSystem.DTOs;
 using ChatSystem.ErrorHandling;
+using ChatSystem.PipeLine.IsProductExisting;
 using ChatSystem.Services.Interfaces.OfferingMechanism;
 using MediatR;
 
 namespace ChatSystem.SystemEvents.UnifiedProposedMechanism;
 public class UnifiedOffer
 {
-    public record ProposedCommand(ProposedItemDTO ProposedData) : IRequest<Result<MessageResponseDTO>>;
+    public record ProposedCommand: IRequest<Result<MessageResponseDTO>>, IExistingCommandAndMatch
+    {
+        public int UserId {get; set;}
+        public ProposedItemDTO ProposedData {get; set;} = null!;
+        public string ResourceId => ProposedData.ItemId;
+        public OfferTye Status => ProposedData.Offer;
+    }
     public class Handler(
         IEnumerable<IProposedOfferStrategy> strategies,
         ILogger<Handler> logger
@@ -14,16 +21,16 @@ public class UnifiedOffer
     {
         private readonly Dictionary<OfferTye, IProposedOfferStrategy> _strategyMap = 
             strategies.ToDictionary(s => s.Target);
-        
         public async Task<Result<MessageResponseDTO>> Handle(ProposedCommand command, CancellationToken cancellationToken)
         {   
             try{
+                
                 var req = command.ProposedData;
                 if(!_strategyMap.TryGetValue(req.Offer, out var strategy))
                 {
                     return Result<MessageResponseDTO>.Failure($"Invalid request.", StatusCodes.Status400BadRequest);
                 }
-                var result = await strategy.ProposedStrategy(req, cancellationToken);
+                var result = await strategy.ProposedStrategy(command.UserId, req, cancellationToken);
                 if(!result.IsSuccess) return Result<MessageResponseDTO>.Failure(result.Error!, result.StatusCode);
                 return result;
             }

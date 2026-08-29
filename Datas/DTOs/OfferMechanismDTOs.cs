@@ -9,6 +9,6 @@ public record TradeProposedDTO(
 public record ProposedItemDTO(
     OfferTye Offer,
     string ItemId,
-    SalePayloadDto? SalePayload,
+    SaleProposedDTO? SalePayload,
     TradeProposedDTO? Tradepayload
 );

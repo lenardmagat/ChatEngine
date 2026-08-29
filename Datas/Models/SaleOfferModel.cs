@@ -26,11 +26,14 @@ public class SaleOffer
     public int? ParentId {get; set;}
     [ForeignKey("ParentId")]
     public SaleOffer? ParentSaleOffer;
-
     public int ItemId {get; set;}
+    [ForeignKey("ItemId")]
+    public Product ItemDetails {get; set;} = null!;
     public int QuantityRequested {get; set;}
     public decimal PricePerUnit {get; set;}
     public SaleOfferStatus Status {get; set;}
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? RespondedAt { get; set; }
 
     private static readonly Dictionary<SaleOfferStatus, SaleOfferStatus[]> _AllowedToTransition = new()
     {
