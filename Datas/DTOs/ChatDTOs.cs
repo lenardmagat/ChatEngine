@@ -34,7 +34,11 @@ public record LoadConversationResponse(
     string RecieverId,
     string ReceiverName
 );
-
+public record RoomDataDTO(
+    int RoomId,
+    int ReceiverId,
+    string ReceiverUsername
+);
 public class MessageSummaryDto
 {
     public int ChatId { get; set; }
@@ -48,4 +52,4 @@ public class ParticipantSummaryDto
 {
     public int ParticipantId { get; set; }
     public bool IsCurrentUser { get; set; }
-}
+}   
