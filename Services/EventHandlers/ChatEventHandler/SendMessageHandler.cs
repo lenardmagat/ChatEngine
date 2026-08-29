@@ -6,102 +6,76 @@ using ChatSystem.ErrorHandling;
 using ChatSystem.Models;
 using ChatSystem.DataBase;
 using ChatSystem.core;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Transactions;
 namespace ChatSystem.EventHandler.Chats;
 public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Result<MessageResponseDTO>>
 {
     private readonly DbManager _db;
     private readonly IHasher _hasher;
-    public SendMessageCommandHandler(IMediator mediator, DbManager db, IHasher hasher)
+    private readonly IMediator _mediator;
+    ILogger<SendMessageCommandHandler> _logger;
+    public SendMessageCommandHandler(IMediator mediator, DbManager db, IHasher hasher, ILogger<SendMessageCommandHandler> logger)
     {
         _db = db;
         _hasher = hasher;
+        _mediator = mediator;
+        _logger = logger;
     }
     public async Task<Result<MessageResponseDTO>> Handle(SendMessageCommand request, CancellationToken cancellation)
     {
-        int? targetRoomid = !string.IsNullOrEmpty(request.MessageData.RoomId)? _hasher.DecodeHashids(request.MessageData.RoomId, HashContext.Room).Value : null;
-        int? targetReceiverId = !string.IsNullOrEmpty(request.MessageData.RecieverId) ? _hasher.DecodeHashids(request.MessageData.RecieverId, HashContext.User).Value : null;
-        if (!targetRoomid.HasValue && !targetReceiverId.HasValue)
+        bool isAlreadyInTransaction = _db.Database.CurrentTransaction != null!;
+        IDbContextTransaction? localTransaction = null!;
+        if (!isAlreadyInTransaction)
         {
-            return Result<MessageResponseDTO>.Failure("Invalid request parameters.", StatusCodes.Status400BadRequest);
+            localTransaction = await _db.Database.BeginTransactionAsync(cancellation);
         }
-        var roomData = await _db.Chatrooms
-        .AsNoTracking()
-        .Where(r => targetRoomid.HasValue 
-            ? r.Id == targetRoomid.Value 
-            : r.Participants.Any(p => p.UserId == request.UserId) && r.Participants.Any(p => p.UserId == targetReceiverId!.Value))
-        .Select(r => new
+        try
         {
-            RoomId = r.Id,
-            IsSenderParticipant = r.Participants.Any(p => p.UserId == request.UserId),
-            RecipientUserId = r.Participants
-                .Where(p => p.UserId != request.UserId)
-                .Select(p => p.UserId)
-                .FirstOrDefault(),
-            SenderName = r.Participants
-                .Where(p => p.UserId == request.UserId)
-                .Select(p => p.User.Username)
-                .FirstOrDefault()
-            
-        })
-        .FirstOrDefaultAsync(cancellation);
-        int finalRoomId;
-        int finalRecipientId;
-        string Username;
-        if (roomData != null)
-        {
-            if (!roomData.IsSenderParticipant)
+            GetRoomDataCommand command = new GetRoomDataCommand(request.UserId, request.MessageData.RecieverId, request.MessageData.RoomId);
+            var RoomDataResult = await _mediator.Send(command, cancellation);
+            if (!RoomDataResult.IsSuccess)
             {
-                return Result<MessageResponseDTO>.Failure("You do not have permission to post here.", StatusCodes.Status403Forbidden);
+                await localTransaction.RollbackAsync(cancellation);
+                return Result<MessageResponseDTO>.Failure(RoomDataResult.Error!, RoomDataResult.StatusCode);
             }
-
-            finalRoomId = roomData.RoomId;
-            finalRecipientId = roomData.RecipientUserId;
-            Username = roomData.SenderName!;
-        }
-        else
-        {
-            if (targetRoomid.HasValue)
+            var RoomData = RoomDataResult.Value;
+            var newMessage = new ChatMessage
             {
-            return Result<MessageResponseDTO>.Failure("Chat session not found.", StatusCodes.Status404NotFound);
-            }
-            var verifiedUsers = await _db.Users
-                .AsNoTracking()
-                .Where(u => u.UserId == request.UserId || u.UserId == targetReceiverId!.Value)
-                .Select(ud => new {Id = ud.UserId, name = ud.Username})
-                .ToListAsync();
-            var recipientAccount = verifiedUsers.FirstOrDefault(u => u.Id == targetReceiverId!.Value);
-            var senderAccount = verifiedUsers.FirstOrDefault(u => u.Id == request.UserId);
-            if(recipientAccount is null || senderAccount is null)
-            {
-                return Result<MessageResponseDTO>.Failure("One or more participant does not exist.", StatusCodes.Status404NotFound);
-            }
-            var newRoom = new ChatRoom();
-            newRoom.Participants.Add(new RoomParticipant { UserId = request.UserId });
-            newRoom.Participants.Add(new RoomParticipant { UserId = targetReceiverId!.Value });
-            await _db.Chatrooms.AddAsync(newRoom);
+                RoomId = RoomData!.RoomId,
+                SenderId = request.UserId,
+                MessageText = request.MessageData.Message,
+                TimeStamp = DateTime.UtcNow
+            };
+            await _db.Messages.AddAsync(newMessage);
             await _db.SaveChangesAsync(cancellation);
-
-            finalRoomId = newRoom.Id;
-            finalRecipientId = targetReceiverId.Value;
-            Username = senderAccount.name;
-        }
-        var newMessage = new ChatMessage
-        {
-            RoomId = finalRoomId,
-            SenderId = request.UserId,
-            MessageText = request.MessageData.Message,
-            TimeStamp = DateTime.UtcNow
-        };
-
-        await _db.Messages.AddAsync(newMessage);
-        await _db.SaveChangesAsync(cancellation);
-        string newMessageHashedId = _hasher.CreateHashids(newMessage.Id, HashContext.Message);
-        string hashedRoomId = _hasher.CreateHashids(finalRoomId, HashContext.Room);
-        string hashedRecipientId = _hasher.CreateHashids(finalRecipientId, HashContext.User);
-
-    return Result<MessageResponseDTO>.Success(
-        new MessageResponseDTO
-            (newMessageHashedId, hashedRoomId, Username, request.MessageData.Message, newMessage.TimeStamp.ToString(), hashedRecipientId)
+            if(localTransaction != null)
+            {
+                await localTransaction.CommitAsync(cancellation);
+            }
+            string newMessageHashedId = _hasher.CreateHashids(newMessage.Id, HashContext.Message);
+            string hashedRoomId = _hasher.CreateHashids(RoomData.RoomId, HashContext.Room);
+            string hashedRecipientId = _hasher.CreateHashids(RoomData.ReceiverId, HashContext.User);
+            return Result<MessageResponseDTO>.Success( new MessageResponseDTO(
+                newMessageHashedId, 
+                hashedRoomId, 
+                RoomData.ReceiverUsername, 
+                request.MessageData.Message, 
+                newMessage.TimeStamp.ToString(), 
+                hashedRecipientId
+            )
         );
     }
+    catch(Exception e)
+    {
+        _logger.LogError(e, $"Un handled error occured while handling SendMessageHandler. Details{request}");
+        return Result<MessageResponseDTO>.Failure("An unxexpected occured in our server.", StatusCodes.Status500InternalServerError);
+    }
+}
+        
+        
+
+        
+
+    
 }
