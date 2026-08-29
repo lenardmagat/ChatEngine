@@ -1,8 +1,32 @@
+using ChatSystem.Models;
+
 namespace ChatSystem.DTOs;
+public enum OfferTye
+{
+    Sale,
+    Trade
+}
+public enum OfferStatus
+{
+    Proposed,   
+    Countered, 
+    Accepted, 
+    Declined, 
+    Cancelled,  
+    Expired,   
+    Completed  
+}
+public record OfferPayload(
+    OfferTye Tye,
+    OfferStatus Status,
+    int ItemId
+);
 public record SendMessage(
     string? RoomId,
     string Message,
-    string? RecieverId
+    string? RecieverId,
+    MessageType Type,
+    OfferPayload? OfferPayload
 );
 public record MessageResponseDTO(
     string NewMessageId,
@@ -13,7 +37,7 @@ public record MessageResponseDTO(
     string ReceipientId
      
 );
-
+    
 public record MessageData(
     string ChatId,
     string ChatMessage,

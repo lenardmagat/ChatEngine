@@ -8,9 +8,11 @@ using ChatSystem.DataBase;
 using ChatSystem.core;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Transactions;
+using ChatSystem.Services.Interfaces;
 namespace ChatSystem.EventHandler.Chats;
-public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Result<MessageResponseDTO>>
+public class SendMessageCommandHandler : IMessageStrategy
 {
+    public MessageType Target => MessageType.Text;
     private readonly DbManager _db;
     private readonly IHasher _hasher;
     private readonly IMediator _mediator;
@@ -22,8 +24,9 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
         _mediator = mediator;
         _logger = logger;
     }
-    public async Task<Result<MessageResponseDTO>> Handle(SendMessageCommand request, CancellationToken cancellation)
+    public async Task<Result<MessageResponseDTO>> MessageHandler(int UserId, SendMessage request, CancellationToken cancellation)
     {
+        
         bool isAlreadyInTransaction = _db.Database.CurrentTransaction != null!;
         IDbContextTransaction? localTransaction = null!;
         if (!isAlreadyInTransaction)
@@ -32,7 +35,7 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
         }
         try
         {
-            GetRoomDataCommand command = new GetRoomDataCommand(request.UserId, request.MessageData.RecieverId, request.MessageData.RoomId);
+            GetRoomDataCommand command = new GetRoomDataCommand(UserId, request.RecieverId, request.RoomId);
             var RoomDataResult = await _mediator.Send(command, cancellation);
             if (!RoomDataResult.IsSuccess)
             {
@@ -43,8 +46,8 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
             var newMessage = new ChatMessage
             {
                 RoomId = RoomData!.RoomId,
-                SenderId = request.UserId,
-                MessageText = request.MessageData.Message,
+                SenderId = UserId,
+                MessageText = request.Message,
                 TimeStamp = DateTime.UtcNow
             };
             await _db.Messages.AddAsync(newMessage);
@@ -60,7 +63,7 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Res
                 newMessageHashedId, 
                 hashedRoomId, 
                 RoomData.ReceiverUsername, 
-                request.MessageData.Message, 
+                request.Message, 
                 newMessage.TimeStamp.ToString(), 
                 hashedRecipientId
             )
