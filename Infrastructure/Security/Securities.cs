@@ -103,5 +103,16 @@ public interface IHasher
         }
         
     }
+    public static class HasherExtensions
+{
+    public static Result<int> DecodeOrFail(this IHasher hasher, string? hashedId, HashContext context)
+    {
+        if (string.IsNullOrWhiteSpace(hashedId))
+            return Result<int>.Failure("Missing ID", StatusCodes.Status400BadRequest);
+
+        var decoded = hasher.DecodeHashids(hashedId, context);
+        return decoded.IsSuccess ? decoded : Result<int>.Failure(decoded.Error!, decoded.StatusCode);
+    }
+}
 }
 
