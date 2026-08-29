@@ -15,6 +15,7 @@ using ChatSystem.core.Jwt;
 using ChatSystem.Services.Auth.Jwt;
 using MediatR;
 using ChatSystem.SystemEvents.Inventory;
+using ChatSystem.EventHandler.Chats;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -48,6 +49,7 @@ public static class DependenciesInjection
         services.AddScoped<ISearchStrategy, ProductSearchStrategy>();
         services.AddScoped<IDocumentStrategy, UserDocumentationStrategy>();
         services.AddScoped<IDocumentStrategy, ProductDocumentationStrategy>();
+        services.AddScoped<IMessageStrategy, SendMessageTextStrategy>();
         services.AddScoped<IJwtTokenServices, JwtServices>();
         services.AddScoped<JWTAuthServices>();
         services.AddScoped<IAuthServices, JWTAuthServices>();

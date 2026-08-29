@@ -10,14 +10,14 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System.Transactions;
 using ChatSystem.Services.Interfaces;
 namespace ChatSystem.EventHandler.Chats;
-public class SendMessageCommandHandler : IMessageStrategy
+public class SendMessageTextStrategy : IMessageStrategy
 {
     public MessageType Target => MessageType.Text;
     private readonly DbManager _db;
     private readonly IHasher _hasher;
     private readonly IMediator _mediator;
-    ILogger<SendMessageCommandHandler> _logger;
-    public SendMessageCommandHandler(IMediator mediator, DbManager db, IHasher hasher, ILogger<SendMessageCommandHandler> logger)
+    ILogger<SendMessageTextStrategy> _logger;
+    public SendMessageTextStrategy(IMediator mediator, DbManager db, IHasher hasher, ILogger<SendMessageTextStrategy> logger)
     {
         _db = db;
         _hasher = hasher;

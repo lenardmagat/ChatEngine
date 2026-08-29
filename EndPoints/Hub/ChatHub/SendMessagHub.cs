@@ -3,15 +3,17 @@ using ChatSystem.DTOs;
 using ChatSystem.SystemEvents.Chats;
 using Microsoft.AspNetCore.SignalR;
 using ChatSystem.ErrorHandling;
+using ChatSystem.Models;
+using ChatSystem.SystemEvents.UnifiedChat;
 namespace ChatSystem.Hubs;
 public partial class AppHub
 {
-    public async Task DirectMessage(string? ChatId, string Message, string? RecipiendId)
+    public async Task SendMessage(SendMessage request)
     {
         try
         {
             int UserId = Context.User!.GetUserId()!.Value;
-            SendMessageCommand command = new SendMessageCommand(UserId, new SendMessage(ChatId, Message, RecipiendId));
+            UnifiedChat.MessageCommand command = new UnifiedChat.MessageCommand(UserId, request);
             Result<MessageResponseDTO> result = await _mediator.Send(command);
             if (!result.IsSuccess)
             {
@@ -32,8 +34,8 @@ public partial class AppHub
         }
         catch(Exception ex)
         {
-            _logger.LogError(ex, $"Failed to send a direct message to  {ChatId ?? RecipiendId}");
-            await Clients.Caller.SendAsync("Unexpected error occured", new {context = ex.ToString(), statsCode = StatusCodes.Status500InternalServerError, timestampt = DateTime.UtcNow});
+            _logger.LogError(ex, $"Failed to send a message to  {request.RecieverId ?? request.RoomId}. Details : {request}");
+            await Clients.Caller.SendAsync("Unexpected error occured in our server", new {context = ex.ToString(), statsCode = StatusCodes.Status500InternalServerError, timestampt = DateTime.UtcNow});
         }
     }
 }
