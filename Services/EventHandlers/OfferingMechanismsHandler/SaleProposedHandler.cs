@@ -38,7 +38,8 @@ public class SaleProposedHandler : IProposedOfferStrategy
             .AsNoTracking()
             .Where(i => 
                 i.ProposedByUserId == UserId && 
-                i.RespondedAt == null && 
+                i.RespondedAt == null &&
+                i.ItemId == ItemId &&
                 NotAllowedStatus.Contains(i.Status))
             .FirstOrDefaultAsync(cancellation);
         if(IsAlreadyHasOffer is not null){
