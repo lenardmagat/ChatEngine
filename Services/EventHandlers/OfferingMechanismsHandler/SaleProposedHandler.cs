@@ -1,3 +1,4 @@
+using System.Transactions;
 using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.DTOs;
@@ -48,8 +49,8 @@ public class SaleProposedHandler : IProposedOfferStrategy
             .Where(p => p.Id == ItemId)
             .Select(p => p.Owner.UserId)
             .FirstOrDefaultAsync(cancellation);
-        try{
-            var Transaction = await _db.Database.BeginTransactionAsync(cancellation);
+        var Transaction = await _db.Database.BeginTransactionAsync(cancellation);
+        try{    
             await _db.Products.Where(p => p.Id == ItemId).ExecuteUpdateAsync(setter => setter
                 .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable - proposedItem.SalePayload.QuantityRequested)
                 .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut + proposedItem.SalePayload.QuantityRequested)
@@ -76,7 +77,7 @@ public class SaleProposedHandler : IProposedOfferStrategy
             var MessageResult = await _mediator.Send(messageCommand, cancellation);
             if (!MessageResult.IsSuccess)
             {
-                Result<MessageResponseDTO>.Failure(MessageResult.Error!, MessageResult.StatusCode);
+                return Result<MessageResponseDTO>.Failure(MessageResult.Error!, MessageResult.StatusCode);
             }
             await _db.OutboxEntries.AddAsync(
                 new OutboxEntry
@@ -85,12 +86,14 @@ public class SaleProposedHandler : IProposedOfferStrategy
                     EntityId = ItemId
                 }
             );
+            await _db.SaveChangesAsync(cancellation);
             await Transaction.CommitAsync(cancellation);
             return  Result<MessageResponseDTO>.Success(MessageResult.Value!);
         }
         catch(Exception e)
         {
             _logger.LogError(e, $"an unexpected error occured while handling ProposedStrategyHandler on user {UserId}. Details:{proposedItem}");
+            await Transaction.RollbackAsync(cancellation);
             return  Result<MessageResponseDTO>.Failure("An unexpected error occured in our server.", StatusCodes.Status500InternalServerError);
         }
     }
