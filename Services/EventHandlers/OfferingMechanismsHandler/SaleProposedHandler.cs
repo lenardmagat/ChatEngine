@@ -34,7 +34,6 @@ public class SaleProposedHandler : IProposedOfferStrategy
         var Decoded = _hasher.DecodeOrFail(proposedItem.ItemId, HashContext.Product);
         int ItemId = Decoded.Value;
         var IsAlreadyHasOffer = await _db.SaleOffers
-            .Include(p => p.ItemDetails)
             .AsNoTracking()
             .Where(i => 
                 i.ProposedByUserId == UserId && 
@@ -44,13 +43,18 @@ public class SaleProposedHandler : IProposedOfferStrategy
         if(IsAlreadyHasOffer is not null){
             return Result<MessageResponseDTO>.Failure($"You already has ongoing transaction in this Item.", StatusCodes.Status400BadRequest);
         }
+        var productOwnerId = await _db.Products
+            .AsNoTracking()
+            .Where(p => p.Id == ItemId)
+            .Select(p => p.Owner.UserId)
+            .FirstOrDefaultAsync(cancellation);
         try{
             var Transaction = await _db.Database.BeginTransactionAsync(cancellation);
             await _db.Products.Where(p => p.Id == ItemId).ExecuteUpdateAsync(setter => setter
                 .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable - proposedItem.SalePayload.QuantityRequested)
                 .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut + proposedItem.SalePayload.QuantityRequested)
                 );
-            GetRoomDataCommand command = new GetRoomDataCommand(UserId, _hasher.CreateHashids(IsAlreadyHasOffer!.ItemDetails.OwnerUserId, HashContext.User), null);
+            GetRoomDataCommand command = new GetRoomDataCommand(UserId, _hasher.CreateHashids(productOwnerId, HashContext.User), null);
             var result = await _mediator.Send(command, cancellation);
             if (!result.IsSuccess)
             {
@@ -60,7 +64,7 @@ public class SaleProposedHandler : IProposedOfferStrategy
             {
                 RoomId = result.Value!.RoomId,
                 ProposedByUserId = UserId,
-                ItemId = IsAlreadyHasOffer.Id,
+                ItemId = ItemId,
                 QuantityRequested = proposedItem.SalePayload.QuantityRequested,
                 PricePerUnit = proposedItem.SalePayload.ProposedPricePerunit
             };
@@ -78,7 +82,7 @@ public class SaleProposedHandler : IProposedOfferStrategy
                 new OutboxEntry
                 {
                     EntityType = DTOs.Documentation.DocumentTarget.Product,
-                    EntityId = IsAlreadyHasOffer.Id
+                    EntityId = ItemId
                 }
             );
             await Transaction.CommitAsync(cancellation);
