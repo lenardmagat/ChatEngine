@@ -35,7 +35,14 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                     .ExecuteUpdateAsync(setter => setter
                     .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable + SaleOfferData!.QuantityRequested)
                     .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - SaleOfferData!.QuantityRequested)
+                    .SetProperty(p => p.UpdatedA, DateTime.UtcNow)
                     );
+                await db.OutboxEntries.AddAsync(new OutboxEntry
+                {
+                    EntityId = SaleOfferData!.ItemId,
+                    EntityType = DTOs.Documentation.DocumentTarget.Product 
+                }, cancellation);
+                await db.SaveChangesAsync(cancellation);
                 await Transaction.CommitAsync(cancellation);
             }
             else
@@ -59,10 +66,18 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                     .ExecuteUpdateAsync(setter => setter
                     .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable + 1)
                     .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - 1)
+                    .SetProperty(p => p.UpdatedA, DateTime.UtcNow)
                     );
+                await db.OutboxEntries.AddAsync(new OutboxEntry
+                {
+                    EntityId = TradeOfferData!.ItemRequestedId,
+                    EntityType = DTOs.Documentation.DocumentTarget.Product 
+                },cancellation);
+                await db.SaveChangesAsync(cancellation);
                 await Transaction.CommitAsync(cancellation);
                 
             }
+            
             return Result.Success();
         }
         catch(Exception e)
