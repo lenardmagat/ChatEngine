@@ -30,7 +30,7 @@ public partial class AppHub
         catch(Exception ex)
         {
             _logger.LogError(ex, "Failed to Load Conversations on line processing");
-            await Clients.Caller.SendAsync("Unexpected error occured", new {context = ex.ToString(), statsCode = StatusCodes.Status500InternalServerError, timestampt = DateTime.UtcNow});
+            await Clients.Caller.SendAsync("RequestError", new {context =  "an Unexpected error occured in our server", statsCode = StatusCodes.Status500InternalServerError, timestampt = DateTime.UtcNow});
         }
     }
 }

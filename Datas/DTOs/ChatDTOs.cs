@@ -1,6 +1,8 @@
+using System.Text.Json.Serialization;
 using ChatSystem.Models;
 
 namespace ChatSystem.DTOs;
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum OfferTye
 {
     Sale,
