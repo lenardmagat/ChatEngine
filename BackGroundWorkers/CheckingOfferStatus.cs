@@ -66,6 +66,7 @@ public class OfferStatusCheckingWorker(IServiceScopeFactory scopeFactory) : Back
                             {
                                 logger.LogError(result.Error, $"an unexpected error occured while trying to expire SaleOffer of Id {offerExpired.Id}");
                             }
+                            logger.LogInformation($"Successfully expiring Sale offer. Id: {offerExpired.Id}");
                         }
                         catch(Exception e)
                         {
@@ -85,6 +86,7 @@ public class OfferStatusCheckingWorker(IServiceScopeFactory scopeFactory) : Back
                             {
                                 logger.LogError(result.Error, $"an unexpected error occured while trying to expire tradeOffer of Id {offerExpired.Id}");
                             }
+                            logger.LogInformation($"Successfully expiring Trade offer. Id: {offerExpired.Id}");
                         }
                         catch(Exception e)
                         {

@@ -19,6 +19,7 @@ using ChatSystem.EventHandler.Chats;
 using ChatSystem.Services.Interfaces.OfferingMechanism;
 using ChatSystem.EventHandler.OfferingMechanism;
 using ChatSystem.PipeLine.IsProductExisting;
+using ChatSystem.BackgroundServices;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -60,6 +61,7 @@ public static class DependenciesInjection
         services.AddScoped<JWTAuthServices>();
         services.AddScoped<IAuthServices, JWTAuthServices>();
         services.AddHostedService<MeiliSyncWorker>();
+        services.AddHostedService<OfferStatusCheckingWorker>();
         return services;
     }
 }
