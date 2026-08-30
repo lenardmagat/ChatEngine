@@ -18,6 +18,7 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                     .Where(s => s.Id == command.Value.Itemid)
                     .ExecuteUpdateAsync(setter => setter
                         .SetProperty(p => p.Status, Models.SaleOfferStatus.Expired)
+                        .SetProperty(p => p.RespondedAt, DateTime.UtcNow)
                         );
                 if(affectedRow == 0)
                 {
@@ -30,6 +31,7 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                     .Where(t => t.Id == command.Value.Itemid)
                     .ExecuteUpdateAsync(setter => setter
                         .SetProperty(p => p.Status, Models.TradeOfferStatus.Expired)
+                        .SetProperty(p => p.RespondedAt, DateTime.UtcNow)
                         );
                 if(affectedRow == 0)
                 {

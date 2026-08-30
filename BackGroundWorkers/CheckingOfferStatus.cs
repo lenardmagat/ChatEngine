@@ -1,0 +1,103 @@
+using ChatSystem.DataBase;
+using ChatSystem.Models;
+using ChatSystem.SystemEvents.OfferBackgroundEvents;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
+namespace ChatSystem.BackgroundServices;
+public class OfferStatusCheckingWorker(IServiceScopeFactory scopeFactory) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        List<SaleOfferStatus> AllowedToExpireSaleOffer = new List<SaleOfferStatus>
+        {
+            SaleOfferStatus.Proposed,
+            SaleOfferStatus.Countered,
+            SaleOfferStatus.Accepted
+        };
+        List<TradeOfferStatus> AllowedToExpireTradeOffer = new List<TradeOfferStatus>
+        {
+            TradeOfferStatus.Accepted,
+            TradeOfferStatus.Proposed,
+            TradeOfferStatus.Countered
+        };
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(3));
+        while(await timer.WaitForNextTickAsync(cancellationToken))
+        {
+            using var scope = scopeFactory.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<DbManager>();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<OfferStatusCheckingWorker>>();
+            try
+            {
+                var SaleExpiredOffer = await db.SaleOffers
+                    .AsNoTracking()
+                    .Where(
+                        s => DateTime.UtcNow >= s.CreatedAt.AddMinutes(30) && 
+                        s.RespondedAt == null && 
+                        AllowedToExpireSaleOffer.Contains(s.Status)
+                        )
+                    .OrderBy(s => s.CreatedAt)
+                    .Take(100) 
+                    .ToListAsync(cancellationToken);
+                var TradeExpiredOffer = await db.TradeOffers
+                    .Where(
+                        s => DateTime.UtcNow >= s.CreatedAt.AddMinutes(30) && 
+                        s.RespondedAt == null && 
+                        AllowedToExpireTradeOffer.Contains(s.Status)
+                        )
+                    .OrderBy(s => s.CreatedAt)
+                    .Take(100)
+                    .ToListAsync(cancellationToken);
+                if(SaleExpiredOffer is null || TradeExpiredOffer is null)
+                {
+                    logger.LogInformation("No Offer expired.");
+                    continue;
+                }
+                if(SaleExpiredOffer is not null)
+                {
+                    foreach(var offerExpired in SaleExpiredOffer)
+                    {
+                        try
+                        {
+                            ExpiredOfferCommand saleCommand = new ExpiredOfferCommand(new ExpiredOfferDTO(offerExpired.Id, DTOs.OfferTye.Sale));
+                            var result = await mediator.Send(saleCommand, cancellationToken);
+                            if (!result.IsSuccess)
+                            {
+                                logger.LogError(result.Error, $"an unexpected error occured while trying to expire SaleOffer of Id {offerExpired.Id}");
+                            }
+                        }
+                        catch(Exception e)
+                        {
+                            logger.LogCritical(e, $"an unexpected error occured while trying to expire SaleOffer of Id {offerExpired.Id}");
+                        }
+                    }
+                }
+                else
+                {
+                    foreach(var offerExpired in TradeExpiredOffer)
+                    {
+                        try
+                        {
+                            ExpiredOfferCommand tradeCommand = new ExpiredOfferCommand(new ExpiredOfferDTO(offerExpired.Id, DTOs.OfferTye.Trade));
+                            var result = await mediator.Send(tradeCommand, cancellationToken);
+                            if (!result.IsSuccess)
+                            {
+                                logger.LogError(result.Error, $"an unexpected error occured while trying to expire tradeOffer of Id {offerExpired.Id}");
+                            }
+                        }
+                        catch(Exception e)
+                        {
+                            logger.LogCritical(e, $"an unexpected error occured while trying to expire tradeOffer of Id {offerExpired.Id}");
+                        }
+                    }
+                }
+                
+            }
+            catch(Exception e)
+            {
+                logger.LogError(e, $"An unexpected error occured in CheckingOfferStatus BackgroundTask");
+            }
+        }
+    }
+}
