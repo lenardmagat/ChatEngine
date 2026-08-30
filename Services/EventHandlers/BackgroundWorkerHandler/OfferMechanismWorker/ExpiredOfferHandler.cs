@@ -1,3 +1,4 @@
+using System.Transactions;
 using ChatSystem.DataBase;
 using ChatSystem.ErrorHandling;
 using ChatSystem.SystemEvents.OfferBackgroundEvents;
@@ -9,6 +10,7 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
 {
     public async Task<Result> Handle(ExpiredOfferCommand command, CancellationToken cancellation)
     {
+        using var Transaction = await db.Database.BeginTransactionAsync(cancellation);
         try
         {
             int affectedRow;
@@ -24,6 +26,17 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                 {
                     return Result.Failure($"Failed to Expired status of the Sale offer item: {command.Value.Itemid}", StatusCodes.Status400BadRequest);
                 }
+                var SaleOfferData = await db.SaleOffers
+                    .AsNoTracking()
+                    .Where(s => s.Id == command.Value.Itemid)
+                    .FirstOrDefaultAsync(cancellation);
+                await db.Products
+                    .Where(p => p.Id == SaleOfferData!.ItemId)
+                    .ExecuteUpdateAsync(setter => setter
+                    .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable + SaleOfferData!.QuantityRequested)
+                    .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - SaleOfferData!.QuantityRequested)
+                    );
+                await Transaction.CommitAsync(cancellation);
             }
             else
             {
@@ -37,6 +50,18 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                 {
                     return Result.Failure($"Failed to Expired status of the Trade offer item: {command.Value.Itemid}", StatusCodes.Status400BadRequest);
                 }
+                var TradeOfferData = await db.TradeOffers
+                    .AsNoTracking()
+                    .Where(s => s.Id == command.Value.Itemid)
+                    .FirstOrDefaultAsync(cancellation);
+                await db.Products
+                    .Where(p => p.Id == TradeOfferData!.ItemRequestedId)
+                    .ExecuteUpdateAsync(setter => setter
+                    .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable + 1)
+                    .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - 1)
+                    );
+                await Transaction.CommitAsync(cancellation);
+                
             }
             return Result.Success();
         }
