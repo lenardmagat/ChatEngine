@@ -56,13 +56,14 @@ public class SaleProposedHandler : IProposedOfferStrategy
             .FirstOrDefaultAsync(cancellation);
         using var Transaction = await _db.Database.BeginTransactionAsync(cancellation);
         try{    
-            int affectedRow = await _db.Products.Where(p => p.Id == ItemId).ExecuteUpdateAsync(setter => setter
-                .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable - proposedItem.SalePayload.QuantityRequested)
-                .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut + proposedItem.SalePayload.QuantityRequested)
-                );
+            int affectedRow = await _db.Products.Where(p => p.Id == ItemId && p.ProductAvailable >= proposedItem.SalePayload.QuantityRequested)
+                .ExecuteUpdateAsync(setter => setter
+                    .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable - proposedItem.SalePayload.QuantityRequested)
+                    .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut + proposedItem.SalePayload.QuantityRequested)
+                    );
             if(affectedRow == 0)
             {
-                return Result<MessageResponseDTO>.Failure("The item is out of stock", StatusCodes.Status400BadRequest);
+                return Result<MessageResponseDTO>.Failure("The item is does not have enough stock for request", StatusCodes.Status400BadRequest);
             }
             GetRoomDataCommand command = new GetRoomDataCommand(UserId, _hasher.CreateHashids(productOwnerId, HashContext.User), null);
             var result = await _mediator.Send(command, cancellation);
