@@ -44,17 +44,26 @@ public class SaleProposedHandler : IProposedOfferStrategy
         if(IsAlreadyHasOffer is not null){
             return Result<MessageResponseDTO>.Failure($"You already has ongoing transaction in this Item.", StatusCodes.Status400BadRequest);
         }
+        var product = await _db.Products
+            .Include(p => p.Owner)
+            .AsNoTracking()
+            .Where(p => p.Id == ItemId)
+            .FirstOrDefaultAsync(cancellation);
         var productOwnerId = await _db.Products
             .AsNoTracking()
             .Where(p => p.Id == ItemId)
             .Select(p => p.Owner.UserId)
             .FirstOrDefaultAsync(cancellation);
-        var Transaction = await _db.Database.BeginTransactionAsync(cancellation);
+        using var Transaction = await _db.Database.BeginTransactionAsync(cancellation);
         try{    
-            await _db.Products.Where(p => p.Id == ItemId).ExecuteUpdateAsync(setter => setter
+            int affectedRow = await _db.Products.Where(p => p.Id == ItemId).ExecuteUpdateAsync(setter => setter
                 .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable - proposedItem.SalePayload.QuantityRequested)
                 .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut + proposedItem.SalePayload.QuantityRequested)
                 );
+            if(affectedRow == 0)
+            {
+                return Result<MessageResponseDTO>.Failure("The item is out of stock", StatusCodes.Status400BadRequest);
+            }
             GetRoomDataCommand command = new GetRoomDataCommand(UserId, _hasher.CreateHashids(productOwnerId, HashContext.User), null);
             var result = await _mediator.Send(command, cancellation);
             if (!result.IsSuccess)
