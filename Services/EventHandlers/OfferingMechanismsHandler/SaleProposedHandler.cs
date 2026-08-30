@@ -74,6 +74,13 @@ public class SaleProposedHandler : IProposedOfferStrategy
             {
                 Result<MessageResponseDTO>.Failure(MessageResult.Error!, MessageResult.StatusCode);
             }
+            await _db.OutboxEntries.AddAsync(
+                new OutboxEntry
+                {
+                    EntityType = DTOs.Documentation.DocumentTarget.Product,
+                    EntityId = IsAlreadyHasOffer.Id
+                }
+            );
             await Transaction.CommitAsync(cancellation);
             return  Result<MessageResponseDTO>.Success(MessageResult.Value!);
         }
