@@ -18,6 +18,7 @@ using ChatSystem.SystemEvents.Inventory;
 using ChatSystem.EventHandler.Chats;
 using ChatSystem.Services.Interfaces.OfferingMechanism;
 using ChatSystem.EventHandler.OfferingMechanism;
+using ChatSystem.PipeLine.IsProductExisting;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -28,6 +29,7 @@ public static class DependenciesInjection
         services.AddDbContext<DbManager>(options => options.UseNpgsql(_DbKey));
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(OwnerShipAuthorizationBehaviour<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProductExistingBehaviour<,>));
         services.AddOptions<HashidsSettings>()
             .Bind(configuration.GetSection("Hashids"))
             .ValidateDataAnnotations()
