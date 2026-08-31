@@ -49,7 +49,7 @@ public class OfferStatusCheckingWorker(IServiceScopeFactory scopeFactory) : Back
                     .OrderBy(s => s.CreatedAt)
                     .Take(100)
                     .ToListAsync(cancellationToken);
-                if(SaleExpiredOffer is null || TradeExpiredOffer is null)
+                if(SaleExpiredOffer.Count() == 0 && TradeExpiredOffer.Count() == 0)
                 {
                     logger.LogInformation("No Offer expired.");
                     continue;
