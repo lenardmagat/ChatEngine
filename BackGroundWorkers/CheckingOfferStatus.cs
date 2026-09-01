@@ -12,12 +12,10 @@ public class OfferStatusCheckingWorker(IServiceScopeFactory scopeFactory) : Back
         List<SaleOfferStatus> AllowedToExpireSaleOffer = new List<SaleOfferStatus>
         {
             SaleOfferStatus.Proposed,
-            SaleOfferStatus.Countered,
-            SaleOfferStatus.Accepted
+            SaleOfferStatus.Countered
         };
         List<TradeOfferStatus> AllowedToExpireTradeOffer = new List<TradeOfferStatus>
         {
-            TradeOfferStatus.Accepted,
             TradeOfferStatus.Proposed,
             TradeOfferStatus.Countered
         };
