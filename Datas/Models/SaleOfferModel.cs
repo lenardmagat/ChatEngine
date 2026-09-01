@@ -50,7 +50,14 @@ public class SaleOffer
                 SaleOfferStatus.Completed, 
                 SaleOfferStatus.Cancelled
             ],
-        [SaleOfferStatus.Countered] = [],
+        [SaleOfferStatus.Countered] = 
+            [
+            SaleOfferStatus.Accepted, 
+            SaleOfferStatus.Countered,
+            SaleOfferStatus.Declined, 
+            SaleOfferStatus.Cancelled, 
+            SaleOfferStatus.Expired
+            ],
         [SaleOfferStatus.Declined]  = [],
         [SaleOfferStatus.Cancelled] = [],
         [SaleOfferStatus.Expired]   = [],
