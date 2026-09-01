@@ -36,11 +36,11 @@ public class SaleProposedHandler : IProposedOfferStrategy
         int ItemId = Decoded.Value;
         var IsAlreadyHasOffer = await _db.SaleOffers
             .AsNoTracking()
-            .Where(i => 
-                i.ProposedByUserId == UserId && 
+            .Where(i =>  
                 i.RespondedAt == null &&
                 i.ItemId == ItemId &&
-                NotAllowedStatus.Contains(i.Status))
+                NotAllowedStatus.Contains(i.Status) &&
+                i.Room.Participants.Any(p => p.UserId == UserId))
             .FirstOrDefaultAsync(cancellation);
         if(IsAlreadyHasOffer is not null){
             return Result<MessageResponseDTO>.Failure($"You already has ongoing transaction in this Item.", StatusCodes.Status400BadRequest);
