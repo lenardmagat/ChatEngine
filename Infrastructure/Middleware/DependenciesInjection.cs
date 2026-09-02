@@ -20,6 +20,7 @@ using ChatSystem.Services.Interfaces.OfferingMechanism;
 using ChatSystem.EventHandler.OfferingMechanism;
 using ChatSystem.PipeLine.IsProductExisting;
 using ChatSystem.BackgroundServices;
+using ChatSystem.PipeLine.IsOfferMatch;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -31,6 +32,7 @@ public static class DependenciesInjection
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(OwnerShipAuthorizationBehaviour<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ProductExistingBehaviour<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(MathOfferToProduct<,>));
         services.AddOptions<HashidsSettings>()
             .Bind(configuration.GetSection("Hashids"))
             .ValidateDataAnnotations()
