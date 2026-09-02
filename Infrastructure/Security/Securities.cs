@@ -15,7 +15,9 @@ public enum HashContext
     Room,
     Message,
     Participant,
-    Product
+    Product,
+    SaleOffer,
+    TradeOffer
 }
 public interface IHasher
 {
@@ -32,6 +34,8 @@ public interface IHasher
         private readonly IHashids _RoomHashids;
         private readonly IHashids _ParticipantHahids;
         private readonly IHashids _ProductHashids;
+        private readonly IHashids _SaleOfferHashId;
+        private readonly IHashids _TradeOfferHashId;
         private readonly string __JWTKeyString;
         private readonly string __IssuerKeyString;
         private readonly string __AudienceKeyString;
@@ -46,6 +50,8 @@ public interface IHasher
             _ParticipantHahids = new Hashids($"{hashidsOptions.Value.HasherSalt}_ParticipantContext", hashidsOptions.Value.MinHashLength);
             _MessageHashids = new Hashids($"{hashidsOptions.Value.HasherSalt}_MessageContext", hashidsOptions.Value.MinHashLength);
             _ProductHashids = new Hashids($"{hashidsOptions.Value.HasherSalt}_ProductContext", hashidsOptions.Value.MinHashLength);
+            _SaleOfferHashId =new Hashids($"{hashidsOptions.Value.HasherSalt}_SaleOfferContext", hashidsOptions.Value.MinHashLength);
+            _TradeOfferHashId = new Hashids($"{hashidsOptions.Value.HasherSalt}_TradeOfferContext", hashidsOptions.Value.MinHashLength);
         }
     public string HashPassword(string password)
         => BCryptTool.HashPassword(password, workFactor: 12);
@@ -81,6 +87,8 @@ public interface IHasher
         HashContext.Message => _MessageHashids.Encode(Id),
         HashContext.Participant => _ParticipantHahids.Encode(Id),
         HashContext.Product => _ProductHashids.Encode(Id),
+        HashContext.SaleOffer => _SaleOfferHashId.Encode(Id),
+        HashContext.TradeOffer => _TradeOfferHashId.Encode(Id),
         _ => _UserHashids.Encode(Id)
     };
     public Result<int> DecodeHashids(string hash, HashContext hashContext)
@@ -95,6 +103,8 @@ public interface IHasher
                 HashContext.Message => _MessageHashids,
                 HashContext.Participant => _ParticipantHahids,
                 HashContext.Product => _ProductHashids,
+                HashContext.SaleOffer => _SaleOfferHashId,
+                HashContext.TradeOffer => _SaleOfferHashId,
                 _ => _UserHashids
             };
             if(!hashidInstance.TryDecodeSingle(hash, out int decoded) || decoded == 0) 
