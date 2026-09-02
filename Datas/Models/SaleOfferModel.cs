@@ -64,13 +64,12 @@ public class SaleOffer
         [SaleOfferStatus.Completed] = []
     };
 
-    public Result TransitionTo(SaleOfferStatus next)
+    public bool TransitionTo(SaleOfferStatus next)
     {
         if(!_AllowedToTransition.TryGetValue(Status, out var allowed) || !allowed.Contains(next))
         {
-            return Result.Failure($"Cannot move offer from {Status} to {next}.", 409);
+            return false;
         }
-        Status = next;
-        return Result.Success();
+        return true;
     }
 }

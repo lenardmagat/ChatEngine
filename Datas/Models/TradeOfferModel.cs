@@ -57,13 +57,10 @@ public class TradeOffer
         [TradeOfferStatus.Declined] = [],
         [TradeOfferStatus.Expired] = []
     };
-    public Result TransitionTo(TradeOfferStatus next)
+    public bool TransitionTo(TradeOfferStatus next)
     {
-        if (!_allowedTransitions.TryGetValue(Status, out var allowed) || !allowed.Contains(next))
-            return Result.Failure($"Cannot move offer from {Status} to {next}.", 409);
-
-        Status = next;
-        return Result.Success();
+        if (!_allowedTransitions.TryGetValue(Status, out var allowed) || !allowed.Contains(next)) return false;
+        return true;
     }
 }
 
