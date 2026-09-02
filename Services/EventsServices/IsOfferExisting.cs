@@ -9,7 +9,7 @@ namespace ChatSystem.PipeLine.IsOfferExisting;
 public interface IOfferExist
 {
     string ParentOfferId {get;}
-    OfferTye OfferType {get;}
+    OfferTye Status {get;}
 }
 public class OfferCheck<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IOfferExist
@@ -25,7 +25,7 @@ public class OfferCheck<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellation)
     {
         Result<int> Decoded;
-        if(request.OfferType == OfferTye.Sale)
+        if(request.Status == OfferTye.Sale)
         {
             Decoded = _hasher.DecodeOrFail(request.ParentOfferId, HashContext.SaleOffer);
         }
@@ -37,7 +37,7 @@ public class OfferCheck<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
         {
             return CreateFailureResponse(Decoded.Error!, Decoded.StatusCode);
         }
-        if(request.OfferType == OfferTye.Sale)
+        if(request.Status == OfferTye.Sale)
         {
             var offer= await _db.SaleOffers
                 .AsNoTracking()

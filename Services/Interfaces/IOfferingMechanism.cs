@@ -11,6 +11,6 @@ public interface IProposedOfferStrategy
 public interface IAcceptOfferStrategy
 {
     OfferTye Target {get;}
-    Task<Result<MessageResponseDTO>> AcceptStrategy(int UserId, AcceptItemDTO data);
+    Task<Result<MessageResponseDTO>> AcceptStrategy(int UserId, AcceptItemDTO data, CancellationToken cancellationToken);
 }
 
