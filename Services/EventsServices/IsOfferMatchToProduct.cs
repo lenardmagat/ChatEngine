@@ -12,13 +12,13 @@ public interface IMatchOfferToProduct
     string ResourceId {get;}
     OfferTye Status {get;}
 }
-public class MathOfferToProduct<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+public class MatchOfferToProduct<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IMatchOfferToProduct
     where TResponse : Result
 {
     private readonly DbManager _db;
     private readonly IHasher _hasher;
-    public MathOfferToProduct(DbManager db, IHasher hasher)
+    public MatchOfferToProduct(DbManager db, IHasher hasher)
     {
         _db = db;
         _hasher = hasher;
