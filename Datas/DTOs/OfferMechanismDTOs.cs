@@ -11,4 +11,9 @@ public record ProposedItemDTO(
     string ItemId,
     SaleProposedDTO? SalePayload,
     TradeProposedDTO? Tradepayload
+);  
+public record AcceptItemDTO(
+    OfferTye OfferType,
+    string ParentOfferId,
+    string ItemId
 );
