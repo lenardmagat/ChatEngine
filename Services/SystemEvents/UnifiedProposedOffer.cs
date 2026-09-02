@@ -1,13 +1,14 @@
 using ChatSystem.DTOs;
 using ChatSystem.ErrorHandling;
+using ChatSystem.PipeLine.IsOfferMatch;
 using ChatSystem.PipeLine.IsProductExisting;
 using ChatSystem.Services.Interfaces.OfferingMechanism;
 using MediatR;
 
 namespace ChatSystem.SystemEvents.UnifiedProposedMechanism;
 public class UnifiedOffer
-{
-    public record ProposedCommand: IRequest<Result<MessageResponseDTO>>, IExistingCommandAndMatch
+{   z
+    public record ProposedCommand: IRequest<Result<MessageResponseDTO>>, IExistingCommandAndMatch, IMatchOfferToProduct
     {
         public int UserId {get; set;}
         public ProposedItemDTO ProposedData {get; set;} = null!;
