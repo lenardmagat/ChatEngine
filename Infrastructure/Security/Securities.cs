@@ -104,7 +104,7 @@ public interface IHasher
                 HashContext.Participant => _ParticipantHahids,
                 HashContext.Product => _ProductHashids,
                 HashContext.SaleOffer => _SaleOfferHashId,
-                HashContext.TradeOffer => _SaleOfferHashId,
+                HashContext.TradeOffer => _TradeOfferHashId,
                 _ => _UserHashids
             };
             if(!hashidInstance.TryDecodeSingle(hash, out int decoded) || decoded == 0) 

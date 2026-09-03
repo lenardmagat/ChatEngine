@@ -21,8 +21,10 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
     public async Task<Result> Handle(CreateAccountCommand command, CancellationToken cancellation)
     {
         try{
-            if(await _db.Users.AnyAsync(u => u.Username == command.Credentials.Username))
-                return Result.Failure("Username alredy exist.", 409);
+            if (string.IsNullOrWhiteSpace(command.Credentials.password) || command.Credentials.password.Length < 6)
+                return Result.Failure("Password must be at least 6 characters long.", StatusCodes.Status400BadRequest);
+            if(await _db.Users.AnyAsync(u => u.Username == command.Credentials.Username, cancellation))
+                return Result.Failure("Username already exists.", StatusCodes.Status409Conflict);
             using var transaction = await _db.Database.BeginTransactionAsync(cancellation);
             User newUser = new User{
                 Username =  command.Credentials.Username,
@@ -38,8 +40,8 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
             return Result.Success();
         }catch(Exception e)
         {
-            _logger.LogCritical(e, $"An Critical bug occured while processing creating account. Details: {command.Credentials}");
-            return Result.Failure("An unexcepted Error occured in the server", StatusCodes.Status500InternalServerError);
+            _logger.LogError(e, "An error occurred while creating account for username {Username}", command.Credentials.Username);
+            return Result.Failure("An unexpected error occurred in the server", StatusCodes.Status500InternalServerError);
         }
     }
 }

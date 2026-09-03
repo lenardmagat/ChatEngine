@@ -7,10 +7,15 @@ public partial class AppHub
 {
     public async Task InitializeChat(string? RecieverId, string? ChatId)
     {
+        int? userId = Context.User?.GetUserId();
+        if (!userId.HasValue)
+        {
+            await Clients.Caller.SendAsync("Error", new { text = "User is not authenticated" });
+            return;
+        }
         try
         {
-            int UserId = Context.User!.GetUserId()!.Value;
-            InitializeChatCommand command = new InitializeChatCommand(UserId, RecieverId, ChatId);
+            InitializeChatCommand command = new InitializeChatCommand(userId.Value, RecieverId, ChatId);
             var result = await _mediator.Send(command);
             if(!result.IsSuccess)
                 await Clients.Caller.SendAsync("Error", new {text = result.Error});
@@ -29,13 +34,13 @@ public partial class AppHub
                         }
                     );
                 }
-                _logger.LogInformation($"Success intializing {result.Value} Chat from user {UserId}");
+                _logger.LogInformation("Success initializing chat room for user {UserId}", userId.Value);
             }
         }
         catch(Exception ex)
         {
-            _logger.LogError(ex, $"Failed to Intialize chat {ChatId ?? RecieverId}");
-            await Clients.Caller.SendAsync("Unexpected error occured", new {context = ex.ToString(), statsCode = StatusCodes.Status500InternalServerError, timestampt = DateTime.UtcNow});
+            _logger.LogError(ex, "Failed to Initialize chat {Target}", ChatId ?? RecieverId);
+            await Clients.Caller.SendAsync("Unexpected error occured", new {context = "An unexpected error occurred in our server", statsCode = StatusCodes.Status500InternalServerError, timestampt = DateTime.UtcNow});
         }
     }
 }

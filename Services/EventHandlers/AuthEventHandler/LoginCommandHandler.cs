@@ -25,12 +25,15 @@ public class LogInCommandHandler : IRequestHandler<LoginCommand, Result<AuthJWTR
     }
     public async Task<Result<AuthJWTResponse>> Handle(LoginCommand command, CancellationToken cancellation)
     {
-        User? user = await _db.Users.FirstOrDefaultAsync(u => u.Username == command.Credentials.Username);
-        if(user is null) return Result<AuthJWTResponse>.Failure("Username is not exisiting", 404);
-        if(!_hasher.VerifyPassword(command.Credentials.password, user.HashedPassword))
+        User? user = await _db.Users.FirstOrDefaultAsync(u => u.Username == command.Credentials.Username, cancellation);
+        if(user is null || !_hasher.VerifyPassword(command.Credentials.password, user.HashedPassword))
         {
-            return Result<AuthJWTResponse>.Failure("Wrong Password.", 404);
-        } 
+            return Result<AuthJWTResponse>.Failure("Invalid username or password.", StatusCodes.Status401Unauthorized);
+        }
+        if(!user.Status)
+        {
+            return Result<AuthJWTResponse>.Failure("Account is deactivated or disabled.", StatusCodes.Status401Unauthorized);
+        }
         var tokens = await _authServices.IssueTokenAsync(user.UserId);
         if(!tokens.IsSuccess)  return Result<AuthJWTResponse>.Failure(tokens.Error!, tokens.StatusCode);
         return Result<AuthJWTResponse>.Success(tokens.Value!);

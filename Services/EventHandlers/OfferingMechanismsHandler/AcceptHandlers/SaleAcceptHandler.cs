@@ -51,9 +51,13 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
             };
             await _db.SaleOffers.AddAsync(newOffer, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
-            await _db.SaleOffers.ExecuteUpdateAsync(setter => setter
-                .SetProperty(p => p.RespondedAt, DateTime.UtcNow)
-            );
+            await _db.SaleOffers
+                .Where(p => p.Id == ParentOffer.Id)
+                .ExecuteUpdateAsync(setter => setter
+                    .SetProperty(p => p.RespondedAt, DateTime.UtcNow)
+                    .SetProperty(p => p.Status, SaleOfferStatus.Accepted),
+                    cancellationToken
+                );
             GetRoomDataCommand command = new GetRoomDataCommand(UserId, null,  _hasher.CreateHashids(ParentOffer.RoomId, HashContext.Room));
             var result = await _mediator.Send(command, cancellationToken);
             if (!result.IsSuccess)
@@ -75,8 +79,8 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
         }catch(Exception e)
         {
             await transaction.RollbackAsync(cancellationToken);
-            _logger.LogError(e, $"an unexpected error occured while handling SaleAcceptedHandler. Details : {$"UserId:{UserId}, ItemDetails: {itemDTO} "}");
-            return Result<MessageResponseDTO>.Failure("An unexpected error occured in our server.", StatusCodes.Status400BadRequest);
+            _logger.LogError(e, "An unexpected error occurred while handling SaleAcceptedHandler. UserId: {UserId}, ItemDetails: {@ItemDetails}", UserId, itemDTO);
+            return Result<MessageResponseDTO>.Failure("An unexpected error occurred in our server.", StatusCodes.Status500InternalServerError);
         }
     }   
 }

@@ -26,8 +26,15 @@ public class ChangePasswordCommandHandler : IRequestHandler<ChangePasswordComman
         {
             return Result.Failure("Wrong password", StatusCodes.Status401Unauthorized); 
         }
+        if (string.IsNullOrWhiteSpace(command.passwordCredentials.NewPassword) || command.passwordCredentials.NewPassword.Length < 6)
+        {
+            return Result.Failure("New password must be at least 6 characters long.", StatusCodes.Status400BadRequest);
+        }
         string NewHashedPassowrd = _hasher.HashPassword(command.passwordCredentials.NewPassword);
         user.HashedPassword = NewHashedPassowrd;
+        await _db.RefreshTokens
+            .Where(t => t.UserId == user.UserId && t.RevokedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, DateTime.UtcNow), cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         return Result.Success(StatusCodes.Status200OK);
     }

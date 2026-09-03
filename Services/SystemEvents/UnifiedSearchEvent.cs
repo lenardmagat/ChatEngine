@@ -29,7 +29,7 @@ public static class UnifiedSearch
             }catch(Exception e)
             {
                 logger.LogError(e,  "Error occurred while handling search request for target {Target}", query.Request.Target);
-                return Result<PagedResult<object>>.Failure(e.Message, StatusCodes.Status500InternalServerError);
+                return Result<PagedResult<object>>.Failure("An unexpected error occurred during search processing.", StatusCodes.Status500InternalServerError);
             }
         }
     }

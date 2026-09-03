@@ -18,12 +18,11 @@ public class MeiliSyncWorker(IServiceScopeFactory scopeFactory) : BackgroundServ
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<MeiliSyncWorker>>();
             try{
                 var pending = await db.OutboxEntries
-                    .Where(e => e.ProcessedAt ==null)
+                    .Where(e => e.ProcessedAt == null)
                     .OrderBy(e => e.CreatedAt)
                     .Take(100)
-                    .ToListAsync();
+                    .ToListAsync(stoppingToken);
                 if(pending.Count == 0){
-                    logger.LogInformation("no outbox entry to process");
                     continue;
                 }
                 foreach(var entry in pending)
@@ -32,10 +31,10 @@ public class MeiliSyncWorker(IServiceScopeFactory scopeFactory) : BackgroundServ
                     var result = await mediator.Send(new UnifiedDocument.DocumentationCommand(request), stoppingToken);
                     if(result.IsSuccess) entry.ProcessedAt = DateTime.UtcNow;
                     else{
-                        logger.LogError(result.Error);
+                        logger.LogError("Failed to process outbox entry {EntityId} ({EntityType}): {Error}", entry.EntityId, entry.EntityType, result.Error);
                     }
                 }
-                await db.SaveChangesAsync();
+                await db.SaveChangesAsync(stoppingToken);
             }catch(Exception e)
             {
                 logger.LogError(e, $"Error occured in up MeilisyncWorker");

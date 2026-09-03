@@ -24,35 +24,63 @@ public class UpdateProductDetailsHandler : IRequestHandler<UpdateProductCommand,
     public async Task<Result> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
         try{
-            var QuantityDelta = request.Details.IsAddOrRemove == IsAddOrRemove.Add ? request.Details.Quantity : -request.Details.Quantity;
-            var productData = await _db.Products
-                .Where(p => p.Id == _hasher.DecodeHashids(request.Details.ProductId, HashContext.Product).Value!)
-                .FirstOrDefaultAsync();
-            if(productData!.Stock + QuantityDelta < 0)
+            if (request.Details.Quantity < 0)
             {
-                return Result.Failure($"You cannot remove {request.Details.Quantity}. Add more quantity or Decline offer to remove product quantity.", StatusCodes.Status400BadRequest);
+                return Result.Failure("Quantity cannot be negative.", StatusCodes.Status400BadRequest);
             }
-            using var Transaction = await _db.Database.BeginTransactionAsync();
+            if (request.Details.NewBasePrice < 0)
+            {
+                return Result.Failure("Price cannot be negative.", StatusCodes.Status400BadRequest);
+            }
+
+            var decoded = _hasher.DecodeOrFail(request.Details.ProductId, HashContext.Product);
+            if (!decoded.IsSuccess)
+            {
+                return Result.Failure(decoded.Error!, decoded.StatusCode);
+            }
+
+            var productData = await _db.Products
+                .Where(p => p.Id == decoded.Value)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (productData is null)
+            {
+                return Result.Failure("Product not found.", StatusCodes.Status404NotFound);
+            }
+
+            var QuantityDelta = request.Details.IsAddOrRemove == IsAddOrRemove.Add ? request.Details.Quantity : -request.Details.Quantity;
+            if (productData.Stock + QuantityDelta < 0)
+            {
+                return Result.Failure($"Total stock cannot fall below 0.", StatusCodes.Status400BadRequest);
+            }
+            if (productData.ProductAvailable + QuantityDelta < 0)
+            {
+                return Result.Failure($"Available stock cannot fall below 0. Reserved items: {productData.ReservedProdcut}.", StatusCodes.Status400BadRequest);
+            }
+
+            using var Transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
             await _db.Products.Where(d => d.Id == productData.Id).ExecuteUpdateAsync(s => s
                 .SetProperty(d => d.Stock, d => d.Stock + QuantityDelta)
                 .SetProperty(d => d.ProductAvailable, d => d.ProductAvailable + QuantityDelta)
                 .SetProperty(d => d.ProductDescription, request.Details.NewDescription)
                 .SetProperty(d => d.ProductName, request.Details.NewName)
                 .SetProperty(d => d.BasePrice, request.Details.NewBasePrice)
+                .SetProperty(d => d.UpdatedA, DateTime.UtcNow),
+                cancellationToken
             );
             await _db.OutboxEntries.AddAsync(
                 new OutboxEntry{
                     EntityId = productData.Id, 
                     EntityType = DTOs.Documentation.DocumentTarget.Product
-                    }
-                );
-            await _db.SaveChangesAsync();
-            await Transaction.CommitAsync();
+                },
+                cancellationToken
+            );
+            await _db.SaveChangesAsync(cancellationToken);
+            await Transaction.CommitAsync(cancellationToken);
             return Result.Success();
-            }
+        }
         catch(Exception e){
-            _logger.LogCritical(e, $"An critical bug occured while processing update on Product. Details:{request.Details}");
-            return Result.Failure("An Unexepected error occcured in the server", StatusCodes.Status500InternalServerError);
+            _logger.LogError(e, "An error occurred while updating product {ProductId} for user {UserId}", request.Details.ProductId, request.UserId);
+            return Result.Failure("An unexpected error occurred in the server.", StatusCodes.Status500InternalServerError);
         }
     }
 }

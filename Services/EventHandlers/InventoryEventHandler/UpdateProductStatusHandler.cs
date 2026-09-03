@@ -24,9 +24,18 @@ public class UpdateProductStatusHandler : IRequestHandler<UpdateProductStatusCom
     List<SaleOfferStatus> ALLOWEDSALETOCANCELLED = new List<SaleOfferStatus>{SaleOfferStatus.Accepted, SaleOfferStatus.Countered, SaleOfferStatus.Proposed};
     public async Task<Result> Handle(UpdateProductStatusCommand details, CancellationToken cancellationToken)
     {
-        int productId = _hasher.DecodeHashids(details.ResourceId, HashContext.Product).Value;
+        var decoded = _hasher.DecodeOrFail(details.ResourceId, HashContext.Product);
+        if (!decoded.IsSuccess)
+        {
+            return Result.Failure(decoded.Error!, decoded.StatusCode);
+        }
+        int productId = decoded.Value;
         var product = await _db.Products.Where(d => d.Id == productId).FirstOrDefaultAsync(cancellationToken);
-        if(product!.IsActive == details.StatusData.NewStatus)
+        if (product is null)
+        {
+            return Result.Failure("Product not found", StatusCodes.Status404NotFound);
+        }
+        if(product.IsActive == details.StatusData.NewStatus)
         {
             if(product.IsActive){
                 return Result.Failure($"The product is already Active", StatusCodes.Status400BadRequest);
@@ -44,39 +53,47 @@ public class UpdateProductStatusHandler : IRequestHandler<UpdateProductStatusCom
                 );
         if(details.StatusData.NewStatus == false)
         {
-            switch (product!.Mode)
+            int reservedStockToRelease = 0;
+            if (product.Mode == ProductMode.ForSaleOnly || product.Mode == ProductMode.AcceptsBoth)
             {
-                case ProductMode.ForSaleOnly:
-                    await _db.SaleOffers
-                        .Where(s => s.ItemId == productId && ALLOWEDSALETOCANCELLED
-                            .Contains(s.Status))
-                        .ExecuteUpdateAsync(s => s.SetProperty(setter => setter
-                            .Status, SaleOfferStatus.Cancelled));
-                    break;
-                case ProductMode.ForTradeOnly:
-                    await _db.TradeOffers
-                        .Where(s => s.ItemRequestedId == productId && ALLOWEDTRADETOCANCELLED
-                            .Contains(s.Status))
-                        .ExecuteUpdateAsync(s => s.SetProperty(setter => setter
-                            .Status, TradeOfferStatus.Cancelled));
-                    break;
-                case ProductMode.AcceptsBoth:
-                    await _db.SaleOffers
-                        .Where(s => s.ItemId == productId && ALLOWEDSALETOCANCELLED
-                            .Contains(s.Status))
-                        .ExecuteUpdateAsync(s => s.SetProperty(setter => setter
-                            .Status, SaleOfferStatus.Cancelled));
-                    await _db.TradeOffers
-                        .Where(s => s.ItemRequestedId == productId && ALLOWEDTRADETOCANCELLED
-                            .Contains(s.Status))
-                        .ExecuteUpdateAsync(s => s.SetProperty(setter => setter
-                            .Status, TradeOfferStatus.Cancelled));
-                    break;
+                var saleOffersToCancel = await _db.SaleOffers
+                    .Where(s => s.ItemId == productId && ALLOWEDSALETOCANCELLED.Contains(s.Status))
+                    .ToListAsync(cancellationToken);
+                reservedStockToRelease += saleOffersToCancel.Sum(s => s.QuantityRequested);
+                await _db.SaleOffers
+                    .Where(s => s.ItemId == productId && ALLOWEDSALETOCANCELLED.Contains(s.Status))
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(setter => setter.Status, SaleOfferStatus.Cancelled)
+                        .SetProperty(setter => setter.RespondedAt, DateTime.UtcNow),
+                        cancellationToken);
+            }
+            if (product.Mode == ProductMode.ForTradeOnly || product.Mode == ProductMode.AcceptsBoth)
+            {
+                var tradeOffersToCancel = await _db.TradeOffers
+                    .Where(s => s.ItemRequestedId == productId && ALLOWEDTRADETOCANCELLED.Contains(s.Status))
+                    .ToListAsync(cancellationToken);
+                reservedStockToRelease += tradeOffersToCancel.Count;
+                await _db.TradeOffers
+                    .Where(s => s.ItemRequestedId == productId && ALLOWEDTRADETOCANCELLED.Contains(s.Status))
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(setter => setter.Status, TradeOfferStatus.Cancelled)
+                        .SetProperty(setter => setter.RespondedAt, DateTime.UtcNow),
+                        cancellationToken);
+            }
+            if (reservedStockToRelease > 0)
+            {
+                await _db.Products.Where(d => d.Id == productId).ExecuteUpdateAsync(
+                    d => d
+                        .SetProperty(setter => setter.ProductAvailable, setter => setter.ProductAvailable + reservedStockToRelease)
+                        .SetProperty(setter => setter.ReservedProdcut, setter => setter.ReservedProdcut - reservedStockToRelease)
+                        .SetProperty(setter => setter.UpdatedA, DateTime.UtcNow),
+                    cancellationToken
+                );
             }
         }
-        await _db.OutboxEntries.AddAsync(new OutboxEntry{EntityId = product!.Id, EntityType = DTOs.Documentation.DocumentTarget.Product});
-        await _db.SaveChangesAsync();
-        await Transaction.CommitAsync();
+        await _db.OutboxEntries.AddAsync(new OutboxEntry{EntityId = product.Id, EntityType = DTOs.Documentation.DocumentTarget.Product}, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+        await Transaction.CommitAsync(cancellationToken);
         return Result.Success();
     }
    

@@ -33,21 +33,43 @@ public class InitializeChatCommandHandler : IRequestHandler<InitializeChatComman
     }
     public async Task<Result<ChatData?>> Handle(InitializeChatCommand command, CancellationToken cancellation)
     {
-        int? targetRoomId = !string.IsNullOrEmpty(command.ChatId) ? _hasher.DecodeHashids(command.ChatId, HashContext.Room).Value : null;
-        int? targetReceiverID = !string.IsNullOrEmpty(command.RecieverId) ? _hasher.DecodeHashids(command.RecieverId, HashContext.User).Value : null;
+        Result<int>? decodedRoomId = !string.IsNullOrEmpty(command.ChatId) 
+            ? _hasher.DecodeOrFail(command.ChatId, HashContext.Room) 
+            : null;
+        if (decodedRoomId is not null && !decodedRoomId.IsSuccess)
+        {
+            return Result<ChatData?>.Failure(decodedRoomId.Error!, decodedRoomId.StatusCode);
+        }
+
+        Result<int>? decodedReceiverId = !string.IsNullOrEmpty(command.RecieverId) 
+            ? _hasher.DecodeOrFail(command.RecieverId, HashContext.User) 
+            : null;
+        if (decodedReceiverId is not null && !decodedReceiverId.IsSuccess)
+        {
+            return Result<ChatData?>.Failure(decodedReceiverId.Error!, decodedReceiverId.StatusCode);
+        }
+
+        int? targetRoomId = decodedRoomId?.Value;
+        int? targetReceiverID = decodedReceiverId?.Value;
+
         var query = _db.Chatrooms.AsNoTracking();
         if (targetRoomId.HasValue)
         {
-            query = query.Where(r => r.Id == targetRoomId);
+            query = query.Where(r => r.Id == targetRoomId.Value && r.Participants.Any(p => p.UserId == command.UserId));
         }
-        else
+        else if (targetReceiverID.HasValue)
         {
             query = query
                 .Where(c => 
                     c.Participants.Any(p => p.UserId == command.UserId) &&
-                    c.Participants.Any(p => p.UserId == targetReceiverID)
+                    c.Participants.Any(p => p.UserId == targetReceiverID.Value)
                     );
         }
+        else
+        {
+            return Result<ChatData?>.Failure("Either ChatId or RecieverId must be specified.", StatusCodes.Status400BadRequest);
+        }
+
         var ChatDataProjection = await query
             .Select(r => new
             {
@@ -65,12 +87,17 @@ public class InitializeChatCommandHandler : IRequestHandler<InitializeChatComman
                     .Select(ChatProjections.ToSummary())
                     .ToList()
             }
-            ).FirstOrDefaultAsync();
+            ).FirstOrDefaultAsync(cancellation);
         if(ChatDataProjection is null)
         {
             if (targetRoomId.HasValue)
             {
-                return Result<ChatData?>.Failure("Chat room session no longer exists.", StatusCodes.Status401Unauthorized);
+                bool roomExists = await _db.Chatrooms.AnyAsync(r => r.Id == targetRoomId.Value, cancellation);
+                if (roomExists)
+                {
+                    return Result<ChatData?>.Failure("You do not have permission to access this chat room.", StatusCodes.Status403Forbidden);
+                }
+                return Result<ChatData?>.Failure("Chat room session no longer exists.", StatusCodes.Status404NotFound);
             }
             return Result<ChatData?>.Success(new ChatData(true, null ,null ,null ,null));
         }

@@ -23,11 +23,19 @@ public class GetProductDetailsHandler : IRequestHandler<GetProductDetailsCommand
     public async Task<Result<ProductDetailDto>> Handle(GetProductDetailsCommand command, CancellationToken cancellationToken)
     {
         try{
-            var productId = _hasher.DecodeHashids(command.ItemId, HashContext.Product).Value;
-            var product = await _db.Products.AsNoTracking().Where(p => p.Id == productId).FirstOrDefaultAsync(cancellationToken);
+            var decoded = _hasher.DecodeOrFail(command.ItemId, HashContext.Product);
+            if (!decoded.IsSuccess)
+            {
+                return Result<ProductDetailDto>.Failure(decoded.Error!, decoded.StatusCode);
+            }
+            var product = await _db.Products.AsNoTracking().Where(p => p.Id == decoded.Value).FirstOrDefaultAsync(cancellationToken);
+            if (product is null)
+            {
+                return Result<ProductDetailDto>.Failure("Product not found", StatusCodes.Status404NotFound);
+            }
             return Result<ProductDetailDto>.Success(
                 new ProductDetailDto(
-                    _hasher.CreateHashids(product!.Id, HashContext.Product),
+                    _hasher.CreateHashids(product.Id, HashContext.Product),
                     product.ProductName,
                     product.ProductDescription,
                     product.BasePrice,
@@ -44,8 +52,8 @@ public class GetProductDetailsHandler : IRequestHandler<GetProductDetailsCommand
         }
         catch(Exception e)
         {
-            _logger.LogError(e, $"error occured while handling GetProductDetailsHandler. Details=> UserId: {command.UserId}, ProductId: {command.ItemId}");
-            return Result<ProductDetailDto>.Failure("An unexpected error occured in internal server", StatusCodes.Status500InternalServerError);
+            _logger.LogError(e, "Error occurred while handling GetProductDetailsHandler for user {UserId}, productId {ProductId}", command.UserId, command.ItemId);
+            return Result<ProductDetailDto>.Failure("An unexpected error occurred in internal server", StatusCodes.Status500InternalServerError);
         }
     }
 }
