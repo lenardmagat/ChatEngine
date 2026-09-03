@@ -51,16 +51,16 @@ public class SendMessageProposedStrategy : IMessageStrategy
                     roomData!.ReceiverUsername,
                     Newmessage.MessageText,
                     DateTime.UtcNow.ToString(),
-                    _hasher.CreateHashids(roomData.ReceiverId, HashContext.Message)
+                    _hasher.CreateHashids(roomData.ReceiverId, HashContext.User)
                 );
                 return Result<MessageResponseDTO>.Success(messageResponse);
             }
             catch(Exception e)
             {
-                _logger.LogError(e, $"Unexpected error occured while handling SendMessageProposedStrategy. Details: {request}");
-                return Result<MessageResponseDTO>.Failure("An unexpected error occured in our server.", StatusCodes.Status500InternalServerError);
+                _logger.LogError(e, "Unexpected error occurred while handling SendMessageProposedStrategy. Details: {@Request}", request);
+                return Result<MessageResponseDTO>.Failure("An unexpected error occurred in our server.", StatusCodes.Status500InternalServerError);
             }
         }
-        return  Result<MessageResponseDTO>.Success(new MessageResponseDTO("s", "s","s" ,"s", "s","s"));
+        return Result<MessageResponseDTO>.Failure("Unsupported offer type.", StatusCodes.Status400BadRequest);
     }
 }

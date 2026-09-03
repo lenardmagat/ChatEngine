@@ -39,7 +39,10 @@ public class SendMessageTextStrategy : IMessageStrategy
             var RoomDataResult = await _mediator.Send(command, cancellation);
             if (!RoomDataResult.IsSuccess)
             {
-                await localTransaction.RollbackAsync(cancellation);
+                if (localTransaction != null)
+                {
+                    await localTransaction.RollbackAsync(cancellation);
+                }
                 return Result<MessageResponseDTO>.Failure(RoomDataResult.Error!, RoomDataResult.StatusCode);
             }
             var RoomData = RoomDataResult.Value;
@@ -50,7 +53,7 @@ public class SendMessageTextStrategy : IMessageStrategy
                 MessageText = request.Message,
                 TimeStamp = DateTime.UtcNow
             };
-            await _db.Messages.AddAsync(newMessage);
+            await _db.Messages.AddAsync(newMessage, cancellation);
             await _db.SaveChangesAsync(cancellation);
             if(localTransaction != null)
             {
@@ -71,8 +74,12 @@ public class SendMessageTextStrategy : IMessageStrategy
     }
     catch(Exception e)
     {
-        _logger.LogError(e, $"Un handled error occured while handling SendMessageHandler. Details{request}");
-        return Result<MessageResponseDTO>.Failure("An unxexpected occured in our server.", StatusCodes.Status500InternalServerError);
+        if (localTransaction != null)
+        {
+            await localTransaction.RollbackAsync(cancellation);
+        }
+        _logger.LogError(e, "Unhandled error occurred while handling SendMessageHandler. Details: {@Request}", request);
+        return Result<MessageResponseDTO>.Failure("An unexpected error occurred in our server.", StatusCodes.Status500InternalServerError);
     }
 }
         

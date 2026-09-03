@@ -32,7 +32,19 @@ public class SaleProposedHandler : IProposedOfferStrategy
         {
             return Result<MessageResponseDTO>.Failure($"Invalid request: Missing data", StatusCodes.Status400BadRequest);
         }
+        if (proposedItem.SalePayload.QuantityRequested <= 0)
+        {
+            return Result<MessageResponseDTO>.Failure("Quantity requested must be greater than zero.", StatusCodes.Status400BadRequest);
+        }
+        if (proposedItem.SalePayload.ProposedPricePerunit < 0)
+        {
+            return Result<MessageResponseDTO>.Failure("Proposed price per unit cannot be negative.", StatusCodes.Status400BadRequest);
+        }
         var Decoded = _hasher.DecodeOrFail(proposedItem.ItemId, HashContext.Product);
+        if (!Decoded.IsSuccess)
+        {
+            return Result<MessageResponseDTO>.Failure(Decoded.Error!, Decoded.StatusCode);
+        }
         int ItemId = Decoded.Value;
         var IsAlreadyHasOffer = await _db.SaleOffers
             .AsNoTracking()
@@ -46,15 +58,23 @@ public class SaleProposedHandler : IProposedOfferStrategy
             return Result<MessageResponseDTO>.Failure($"You already has ongoing transaction in this Item.", StatusCodes.Status400BadRequest);
         }
         var product = await _db.Products
-            .Include(p => p.Owner)
             .AsNoTracking()
             .Where(p => p.Id == ItemId)
+            .Select(p => new { p.Id, p.OwnerUserId, p.IsActive, p.IsAvailable, p.ProductAvailable })
             .FirstOrDefaultAsync(cancellation);
-        var productOwnerId = await _db.Products
-            .AsNoTracking()
-            .Where(p => p.Id == ItemId)
-            .Select(p => p.Owner.UserId)
-            .FirstOrDefaultAsync(cancellation);
+        if (product is null)
+        {
+            return Result<MessageResponseDTO>.Failure("The item does not exist.", StatusCodes.Status404NotFound);
+        }
+        if (!product.IsActive || !product.IsAvailable)
+        {
+            return Result<MessageResponseDTO>.Failure("This product is currently inactive or unavailable.", StatusCodes.Status400BadRequest);
+        }
+        if (product.OwnerUserId == UserId)
+        {
+            return Result<MessageResponseDTO>.Failure("You cannot make an offer on your own product.", StatusCodes.Status400BadRequest);
+        }
+        int productOwnerId = product.OwnerUserId;
         using var Transaction = await _db.Database.BeginTransactionAsync(cancellation);
         try{    
             int affectedRow = await _db.Products.Where(p => p.Id == ItemId && p.ProductAvailable >= proposedItem.SalePayload.QuantityRequested)
@@ -103,9 +123,9 @@ public class SaleProposedHandler : IProposedOfferStrategy
         }
         catch(Exception e)
         {
-            _logger.LogError(e, $"an unexpected error occured while handling ProposedStrategyHandler on user {UserId}. Details:{proposedItem}");
+            _logger.LogError(e, "An unexpected error occurred while handling ProposedStrategyHandler for user {UserId}. Details: {@ProposedItem}", UserId, proposedItem);
             await Transaction.RollbackAsync(cancellation);
-            return  Result<MessageResponseDTO>.Failure("An unexpected error occured in our server.", StatusCodes.Status500InternalServerError);
+            return Result<MessageResponseDTO>.Failure("An unexpected error occurred in our server.", StatusCodes.Status500InternalServerError);
         }
     }
 

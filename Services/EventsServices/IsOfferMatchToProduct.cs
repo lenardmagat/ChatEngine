@@ -25,22 +25,31 @@ public class MatchOfferToProduct<TRequest, TResponse> : IPipelineBehavior<TReque
     }
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        int ItemId = _hasher.DecodeOrFail(request.ResourceId, HashContext.Product).Value;
+        var decoded = _hasher.DecodeOrFail(request.ResourceId, HashContext.Product);
+        if (!decoded.IsSuccess)
+        {
+            return CreateFailureResponse(decoded.Error!, decoded.StatusCode);
+        }
+        int ItemId = decoded.Value;
         var item = await _db.Products
             .AsNoTracking()
             .Where(p => p.Id == ItemId)
             .FirstOrDefaultAsync(cancellationToken);
-        if(!item!.IsActive || !item.IsAvailable)
+        if (item is null)
         {
-            return CreateFailureResponse("The Item is not available", StatusCodes.Status400BadRequest);
+            return CreateFailureResponse("The item does not exist.", StatusCodes.Status404NotFound);
+        }
+        if(!item.IsActive || !item.IsAvailable)
+        {
+            return CreateFailureResponse("The item is not available.", StatusCodes.Status400BadRequest);
         }
         if(item.Mode == Models.ProductMode.ForSaleOnly && request.Status != OfferTye.Sale)
         {
-            return CreateFailureResponse("This item is not for sale.", StatusCodes.Status400BadRequest);
+            return CreateFailureResponse("This item is only available for sale.", StatusCodes.Status400BadRequest);
         }
         if(item.Mode == Models.ProductMode.ForTradeOnly && request.Status != OfferTye.Trade)
         {
-            return CreateFailureResponse("This item is not for sale.", StatusCodes.Status400BadRequest);
+            return CreateFailureResponse("This item is only available for trade.", StatusCodes.Status400BadRequest);
         }
         return await next();
     }

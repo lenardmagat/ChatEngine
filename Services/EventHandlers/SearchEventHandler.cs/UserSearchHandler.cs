@@ -11,11 +11,11 @@ public class UserSearchStrategy(IDynamicSearchService searchService, IHasher has
     {
         string? roleFilter = request.Filters?.GetValueOrDefault("role");
         PagedResult<UserDocumentation> rawpagedUsers;
-        if(!string.IsNullOrWhiteSpace(roleFilter))
+        if(!string.IsNullOrWhiteSpace(roleFilter) && Enum.TryParse<ChatSystem.Models.Roles>(roleFilter, true, out var validRole))
         {
             rawpagedUsers = await searchService.SearchWithFilterAsync<UserDocumentation>(
                 request.Term,
-                $"role = '{roleFilter}'",
+                $"role = '{validRole}'",
                 request.Page, 
                 request.PageSize, 
                 cancellationToken

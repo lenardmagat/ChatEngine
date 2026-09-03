@@ -6,7 +6,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatSystem.EventHandler.OfferMechanisBackgroundWorker;
-public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCommand, Result>
+public class ExpiredOfferHandler(DbManager db, ILogger<ExpiredOfferHandler> logger) : IRequestHandler<ExpiredOfferCommand, Result>
 {
     public async Task<Result> Handle(ExpiredOfferCommand command, CancellationToken cancellation)
     {
@@ -20,11 +20,12 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                     .Where(s => s.Id == command.Value.Itemid)
                     .ExecuteUpdateAsync(setter => setter
                         .SetProperty(p => p.Status, Models.SaleOfferStatus.Expired)
-                        .SetProperty(p => p.RespondedAt, DateTime.UtcNow)
+                        .SetProperty(p => p.RespondedAt, DateTime.UtcNow),
+                        cancellation
                         );
                 if(affectedRow == 0)
                 {
-                    return Result.Failure($"Failed to Expired status of the Sale offer item: {command.Value.Itemid}", StatusCodes.Status400BadRequest);
+                    return Result.Failure($"Failed to expire status of the Sale offer item: {command.Value.Itemid}", StatusCodes.Status400BadRequest);
                 }
                 var SaleOfferData = await db.SaleOffers
                     .AsNoTracking()
@@ -35,7 +36,8 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                     .ExecuteUpdateAsync(setter => setter
                     .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable + SaleOfferData!.QuantityRequested)
                     .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - SaleOfferData!.QuantityRequested)
-                    .SetProperty(p => p.UpdatedA, DateTime.UtcNow)
+                    .SetProperty(p => p.UpdatedA, DateTime.UtcNow),
+                    cancellation
                     );
                 await db.OutboxEntries.AddAsync(new OutboxEntry
                 {
@@ -51,11 +53,12 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                     .Where(t => t.Id == command.Value.Itemid)
                     .ExecuteUpdateAsync(setter => setter
                         .SetProperty(p => p.Status, Models.TradeOfferStatus.Expired)
-                        .SetProperty(p => p.RespondedAt, DateTime.UtcNow)
+                        .SetProperty(p => p.RespondedAt, DateTime.UtcNow),
+                        cancellation
                         );
                 if(affectedRow == 0)
                 {
-                    return Result.Failure($"Failed to Expired status of the Trade offer item: {command.Value.Itemid}", StatusCodes.Status400BadRequest);
+                    return Result.Failure($"Failed to expire status of the Trade offer item: {command.Value.Itemid}", StatusCodes.Status400BadRequest);
                 }
                 var TradeOfferData = await db.TradeOffers
                     .AsNoTracking()
@@ -66,7 +69,8 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
                     .ExecuteUpdateAsync(setter => setter
                     .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable + 1)
                     .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - 1)
-                    .SetProperty(p => p.UpdatedA, DateTime.UtcNow)
+                    .SetProperty(p => p.UpdatedA, DateTime.UtcNow),
+                    cancellation
                     );
                 await db.OutboxEntries.AddAsync(new OutboxEntry
                 {
@@ -82,7 +86,8 @@ public class ExpiredOfferHandler(DbManager db) : IRequestHandler<ExpiredOfferCom
         }
         catch(Exception e)
         {
-            return Result.Failure($"Failed to Expired status of the Sale offer item: {command.Value.Itemid}. Details: {e}", StatusCodes.Status400BadRequest);
+            logger.LogError(e, "Failed to expire offer {ItemId} of type {Type}", command.Value.Itemid, command.Value.Type);
+            return Result.Failure("An unexpected error occurred while expiring offer.", StatusCodes.Status500InternalServerError);
         }
     }
 }

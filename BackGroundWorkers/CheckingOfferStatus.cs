@@ -47,49 +47,50 @@ public class OfferStatusCheckingWorker(IServiceScopeFactory scopeFactory) : Back
                     .OrderBy(s => s.CreatedAt)
                     .Take(100)
                     .ToListAsync(cancellationToken);
-                if(SaleExpiredOffer.Count() == 0 && TradeExpiredOffer.Count() == 0)
+                if(SaleExpiredOffer.Count == 0 && TradeExpiredOffer.Count == 0)
                 {
-                    logger.LogInformation("No Offer expired.");
                     continue;
                 }
-                if(SaleExpiredOffer is not null)
+
+                foreach(var offerExpired in SaleExpiredOffer)
                 {
-                    foreach(var offerExpired in SaleExpiredOffer)
+                    try
                     {
-                        try
+                        ExpiredOfferCommand saleCommand = new ExpiredOfferCommand(new ExpiredOfferDTO(offerExpired.Id, DTOs.OfferTye.Sale));
+                        var result = await mediator.Send(saleCommand, cancellationToken);
+                        if (!result.IsSuccess)
                         {
-                            ExpiredOfferCommand saleCommand = new ExpiredOfferCommand(new ExpiredOfferDTO(offerExpired.Id, DTOs.OfferTye.Sale));
-                            var result = await mediator.Send(saleCommand, cancellationToken);
-                            if (!result.IsSuccess)
-                            {
-                                logger.LogError(result.Error, $"an unexpected error occured while trying to expire SaleOffer of Id {offerExpired.Id}");
-                            }
-                            logger.LogInformation($"Successfully expiring Sale offer. Id: {offerExpired.Id}");
+                            logger.LogError("An error occurred while trying to expire SaleOffer {Id}: {Error}", offerExpired.Id, result.Error);
                         }
-                        catch(Exception e)
+                        else
                         {
-                            logger.LogCritical(e, $"an unexpected error occured while trying to expire SaleOffer of Id {offerExpired.Id}");
+                            logger.LogInformation("Successfully expired Sale offer Id: {Id}", offerExpired.Id);
                         }
                     }
-                }
-                else
-                {
-                    foreach(var offerExpired in TradeExpiredOffer)
+                    catch(Exception e)
                     {
-                        try
+                        logger.LogCritical(e, "An unexpected error occurred while trying to expire SaleOffer Id: {Id}", offerExpired.Id);
+                    }
+                }
+
+                foreach(var offerExpired in TradeExpiredOffer)
+                {
+                    try
+                    {
+                        ExpiredOfferCommand tradeCommand = new ExpiredOfferCommand(new ExpiredOfferDTO(offerExpired.Id, DTOs.OfferTye.Trade));
+                        var result = await mediator.Send(tradeCommand, cancellationToken);
+                        if (!result.IsSuccess)
                         {
-                            ExpiredOfferCommand tradeCommand = new ExpiredOfferCommand(new ExpiredOfferDTO(offerExpired.Id, DTOs.OfferTye.Trade));
-                            var result = await mediator.Send(tradeCommand, cancellationToken);
-                            if (!result.IsSuccess)
-                            {
-                                logger.LogError(result.Error, $"an unexpected error occured while trying to expire tradeOffer of Id {offerExpired.Id}");
-                            }
-                            logger.LogInformation($"Successfully expiring Trade offer. Id: {offerExpired.Id}");
+                            logger.LogError("An error occurred while trying to expire TradeOffer {Id}: {Error}", offerExpired.Id, result.Error);
                         }
-                        catch(Exception e)
+                        else
                         {
-                            logger.LogCritical(e, $"an unexpected error occured while trying to expire tradeOffer of Id {offerExpired.Id}");
+                            logger.LogInformation("Successfully expired Trade offer Id: {Id}", offerExpired.Id);
                         }
+                    }
+                    catch(Exception e)
+                    {
+                        logger.LogCritical(e, "An unexpected error occurred while trying to expire TradeOffer Id: {Id}", offerExpired.Id);
                     }
                 }
                 

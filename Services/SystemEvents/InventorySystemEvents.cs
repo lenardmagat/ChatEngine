@@ -50,15 +50,19 @@ public class OwnerShipAuthorizationBehaviour<TRequest, TResponse> : IPipelineBeh
         var DecodedHashId = _hasher.DecodeHashids(request.ResourceId, HashContext.Product);
         if (!DecodedHashId.IsSuccess)
         {
-            return CreateFailureResponse("Tampered or Broken Id detected", StatusCodes.Status401Unauthorized);
+            return CreateFailureResponse("Tampered or Broken Id detected", StatusCodes.Status400BadRequest);
         }
-        var ownerId = await _db.Products
+        var product = await _db.Products
             .Where(p => p.Id == DecodedHashId.Value)
-            .Select(p => p.OwnerUserId)
-            .FirstOrDefaultAsync();
-        if(ownerId != request.UserId)
+            .Select(p => new { p.OwnerUserId })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (product is null)
         {
-            return CreateFailureResponse("You do not own this resource", StatusCodes.Status401Unauthorized);
+            return CreateFailureResponse("Product not found", StatusCodes.Status404NotFound);
+        }
+        if(product.OwnerUserId != request.UserId)
+        {
+            return CreateFailureResponse("You do not have permission to access this resource", StatusCodes.Status403Forbidden);
         }
         return await next();
                 

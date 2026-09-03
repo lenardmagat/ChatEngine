@@ -26,7 +26,7 @@ public class Product
 
     [Range(0, double.MaxValue, ErrorMessage = "Base price cannot be negative")]
     public decimal BasePrice {get; set;}
-    [Range(0, int.MinValue, ErrorMessage = "Stock cannot be negative")]
+    [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative")]
     public int Stock {get; set;}
     [Range(0, int.MaxValue)]
     public int ProductAvailable {get; set;}

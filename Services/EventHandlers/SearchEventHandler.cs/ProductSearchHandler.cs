@@ -19,9 +19,9 @@ public class ProductSearchStrategy : ISearchStrategy
     public async Task<PagedResult<object>> SearchAsync(SearchRequest request, CancellationToken cancellationToken)
     {
         string? typeFilter = request.Filters?.GetValueOrDefault("Mode");
-        string meiliFilter = string.IsNullOrWhiteSpace(typeFilter)
-            ? "isActive = 'True' AND isAvailable = 'True'"
-            : $"productStatus = '{typeFilter}' AND isActive = 'True' AND isAvailable = 'True'";
+        string meiliFilter = (!string.IsNullOrWhiteSpace(typeFilter) && Enum.TryParse<ChatSystem.Models.ProductMode>(typeFilter, true, out var validMode))
+            ? $"productStatus = '{validMode}' AND isActive = 'True' AND isAvailable = 'True'"
+            : "isActive = 'True' AND isAvailable = 'True'";
         _logger.LogInformation("Built filter: {Filter}", meiliFilter);
         PagedResult<ProductDocumentation> rawpagedProduct;
         rawpagedProduct = await _searchService.SearchWithFilterAsync<ProductDocumentation>(
