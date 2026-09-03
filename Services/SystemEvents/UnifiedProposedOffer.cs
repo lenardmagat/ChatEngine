@@ -7,7 +7,7 @@ using MediatR;
 
 namespace ChatSystem.SystemEvents.UnifiedProposedMechanism;
 public class UnifiedOffer
-{   z
+{
     public record ProposedCommand: IRequest<Result<MessageResponseDTO>>, IExistingCommandAndMatch, IMatchOfferToProduct
     {
         public int UserId {get; set;}

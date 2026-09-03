@@ -36,8 +36,7 @@ public record MessageResponseDTO(
     string SenderName,
     string NewMessage,
     string TimeStampt,
-    string ReceipientId
-     
+    string ReceipientId  
 );
     
 public record MessageData(
