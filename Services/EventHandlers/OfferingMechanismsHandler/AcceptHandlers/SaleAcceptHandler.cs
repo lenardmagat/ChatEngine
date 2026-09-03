@@ -74,6 +74,7 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
             
         }catch(Exception e)
         {
+            await transaction.RollbackAsync(cancellationToken);
             _logger.LogError(e, $"an unexpected error occured while handling SaleAcceptedHandler. Details : {$"UserId:{UserId}, ItemDetails: {itemDTO} "}");
             return Result<MessageResponseDTO>.Failure("An unexpected error occured in our server.", StatusCodes.Status400BadRequest);
         }
