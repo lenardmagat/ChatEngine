@@ -8,20 +8,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ChatSystem.core;
 namespace ChatSystem.EventHandler.Chats;
-public static class ChatProjections
-{
-    public static Expression<Func<ChatMessage, MessageSummaryDto>> ToSummary()
-    {
-        return m => new MessageSummaryDto
-        {
-            ChatId = m.Id,
-            SenderName = m.Sender.Username,
-            SenderId = m.SenderId,
-            ChatMessage = m.MessageText,
-            TimeStampt = m.TimeStamp
-        };
-    }
-}
 public class InitializeChatCommandHandler : IRequestHandler<InitializeChatCommand, Result<ChatData?>>
 {
     private readonly DbManager _db;
@@ -84,7 +70,34 @@ public class InitializeChatCommandHandler : IRequestHandler<InitializeChatComman
                     .OrderByDescending(m => m.Id)
                     .Take(10)
                     .AsQueryable()
-                    .Select(ChatProjections.ToSummary())
+                    .Select(m => new
+                    {
+                        m.Id,
+                        m.MessageText,
+                        m.TimeStamp,
+                        m.Sender.Username,
+                        m.SenderId,
+                        SaleOffer = m.SaleOffer == null ? null : new SaleOffer
+                        {
+                            Id = m.SaleOffer.Id,
+                            ItemId = m.SaleOffer.ItemId,
+                            ItemDetails = m.SaleOffer.ItemDetails,
+                            UserProposed = m.SaleOffer.UserProposed,
+                            PricePerUnit = m.SaleOffer.PricePerUnit,
+                            QuantityRequested = m.SaleOffer.QuantityRequested,
+                            Status = m.SaleOffer.Status,
+                            CreatedAt = m.SaleOffer.CreatedAt
+                        },
+                        TradeOffer = m.TradeOffer == null ? null : new TradeOffer
+                        {
+                            Id = m.TradeOffer.Id,
+                            ItemRequestedId = m.TradeOffer.ItemRequestedId,
+                            ItemOffered = m.TradeOffer.ItemOffered,
+                            Status = m.TradeOffer.Status,
+                            CreatedAt = m.TradeOffer.CreatedAt
+                        },
+                        Type = m.Type
+                    })
                     .ToList()
             }
             ).FirstOrDefaultAsync(cancellation);
@@ -104,11 +117,23 @@ public class InitializeChatCommandHandler : IRequestHandler<InitializeChatComman
         List<MessageData> messageDatas = ChatDataProjection
             .RecentMessages
             .Select(m => new MessageData(
-                _hasher.CreateHashids(m.ChatId, HashContext.Message),
-                m.ChatMessage,
-                m.TimeStampt,
-                m.SenderName,
-                _hasher.CreateHashids(m.SenderId, HashContext.User)
+                _hasher.CreateHashids(m.Id, HashContext.Message),
+                m.MessageText,
+                m.TimeStamp,
+                m.Username,
+                _hasher.CreateHashids(m.SenderId, HashContext.User),
+                m.SaleOffer is not null ? new SaleOfferResponseDTO(
+                    _hasher.CreateHashids(m.SaleOffer.Id, HashContext.SaleOffer),
+                    _hasher.CreateHashids(m.SaleOffer.ItemId, HashContext.Product),
+                    m.SaleOffer.ItemDetails.ProductName,
+                    m.SaleOffer.QuantityRequested,
+                    m.SaleOffer.PricePerUnit,
+                    m.SaleOffer.PricePerUnit * m.SaleOffer.QuantityRequested,
+                    m.SaleOffer.Status.ToString(),
+                    m.SaleOffer.UserProposed.Username,
+                    m.SaleOffer.CreatedAt
+                ) : null,
+                m.Type
                 )
             ).ToList();
         ChatData data = new ChatData(

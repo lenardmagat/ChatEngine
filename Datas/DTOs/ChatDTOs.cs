@@ -31,12 +31,9 @@ public record SendMessage(
     OfferPayload? OfferPayload
 );
 public record MessageResponseDTO(
-    string NewMessageId,
     string RoomId,
-    string SenderName,
-    string NewMessage,
-    string TimeStampt,
-    string ReceipientId  
+    string ReceipientId,
+    MessageData MessageData
 );
     
 public record MessageData(
@@ -44,7 +41,10 @@ public record MessageData(
     string ChatMessage,
     DateTime TimeStampt,
     string SenderName,
-    string SenderId
+    string SenderId,
+    SaleOfferResponseDTO? SaleOfferDetails,
+    MessageType Type = MessageType.Text,
+    string OfferCategory = "Text"
 );
 public record ChatData(
     bool IsNew,
@@ -71,6 +71,10 @@ public class MessageSummaryDto
     public int SenderId { get; set; }
     public string ChatMessage { get; set; } = null!;
     public DateTime TimeStampt { get; set; }
+    public MessageType Type { get; set; }
+    public OfferTye OfferCategory { get; set; }
+    public SaleOffer? saleOffer {get; set;}
+    public TradeOffer? tradeOffer {get; set;}
 }
 
 public class ParticipantSummaryDto

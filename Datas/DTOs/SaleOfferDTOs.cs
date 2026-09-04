@@ -35,3 +35,14 @@ public class SalePayloadDto
     public decimal PricePerUnit { get; set; }
     public decimal TotalPrice => QuantityRequested * PricePerUnit;
 }
+public record SaleOfferResponseDTO(
+    string OfferId,
+    string ItemId,
+    string ItemName,
+    int QuantityRequested,
+    decimal PricePerUnit,
+    decimal TotalPrice,
+    string Status,
+    string ProposedByUserName,
+    DateTime CreatedAt
+);
