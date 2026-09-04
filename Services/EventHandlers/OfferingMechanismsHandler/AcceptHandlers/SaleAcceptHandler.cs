@@ -30,22 +30,12 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
     public async Task<Result<MessageResponseDTO>> AcceptStrategy(int UserId, AcceptItemDTO itemDTO, CancellationToken cancellationToken)
     {
         var decoded = _hasher.DecodeHashids(itemDTO.ParentOfferId, HashContext.SaleOffer);
-        if (!decoded.IsSuccess)
-        {
-            return Result<MessageResponseDTO>.Failure("Invalid offer identifier.", StatusCodes.Status400BadRequest);
-        }
         int offerId = decoded.Value;
-
         var offer = await _db.SaleOffers
             .Where(s => s.Id == offerId)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (offer is null)
-        {
-            return Result<MessageResponseDTO>.Failure("The offer does not exist.", StatusCodes.Status404NotFound);
-        }
-
-        if (!offer.TransitionTo(SaleOfferStatus.Accepted))
+        if (!offer!.TransitionTo(SaleOfferStatus.Accepted))
         {
             return Result<MessageResponseDTO>.Failure("Request is not allowed in current status of transaction.", StatusCodes.Status400BadRequest);
         }

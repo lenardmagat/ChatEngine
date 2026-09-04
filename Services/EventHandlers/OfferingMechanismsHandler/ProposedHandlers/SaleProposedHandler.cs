@@ -51,12 +51,7 @@ public class SaleProposedHandler : IProposedOfferStrategy
         }
 
         var decoded = _hasher.DecodeOrFail(proposedItem.ItemId, HashContext.Product);
-        if (!decoded.IsSuccess)
-        {
-            return Result<MessageResponseDTO>.Failure(decoded.Error!, decoded.StatusCode);
-        }
         int itemId = decoded.Value;
-
         var isAlreadyHasOffer = await _db.SaleOffers
             .AsNoTracking()
             .Where(i =>  
@@ -76,12 +71,7 @@ public class SaleProposedHandler : IProposedOfferStrategy
             .Where(p => p.Id == itemId)
             .Select(p => new { p.Id, p.OwnerUserId, p.IsActive, p.IsAvailable, p.ProductAvailable })
             .FirstOrDefaultAsync(cancellation);
-
-        if (product is null)
-        {
-            return Result<MessageResponseDTO>.Failure("The item does not exist.", StatusCodes.Status404NotFound);
-        }
-        if (!product.IsActive || !product.IsAvailable)
+        if (!product!.IsActive || !product.IsAvailable)
         {
             return Result<MessageResponseDTO>.Failure("This product is currently inactive or unavailable.", StatusCodes.Status400BadRequest);
         }

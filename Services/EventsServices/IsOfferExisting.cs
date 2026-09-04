@@ -45,7 +45,7 @@ public class OfferCheck<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
                 .FirstOrDefaultAsync(cancellation);
             if(offer is null)
             {
-                return CreateFailureResponse("The offer is not existing", StatusCodes.Status400BadRequest);
+                return CreateFailureResponse("The offer does not exist.", StatusCodes.Status404NotFound);
             }
            return await next();
         }
@@ -57,7 +57,7 @@ public class OfferCheck<TRequest, TResponse> : IPipelineBehavior<TRequest, TResp
                 .FirstOrDefaultAsync(cancellation);
             if(offer is null)
             {
-                return CreateFailureResponse("The offer is not existing", StatusCodes.Status400BadRequest);
+                return CreateFailureResponse("The offer does not exist.", StatusCodes.Status404NotFound);
             }
            return await next();
         }
