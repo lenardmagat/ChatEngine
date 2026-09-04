@@ -27,7 +27,10 @@ public static class DependenciesInjection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
-        var _DbKey = configuration.GetConnectionString("DefaultConnection") ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        var _DbKey = configuration.GetConnectionString("DefaultConnection") 
+            ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? configuration["DB_CONNECTION_STRING"]
+            ?? Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
         if(string.IsNullOrEmpty(_DbKey)) throw new InvalidConfigurationException("Data Base connection string is misisng");
         services.AddDbContext<DbManager>(options => options.UseNpgsql(_DbKey));
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));

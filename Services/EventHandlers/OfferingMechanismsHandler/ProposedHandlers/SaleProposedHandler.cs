@@ -11,12 +11,14 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatSystem.EventHandler.OfferingMechanism;
+
 public class SaleProposedHandler : IProposedOfferStrategy
 {
     private readonly DbManager _db;
     private readonly IHasher _hasher;
     private readonly IMediator _mediator;
     private readonly ILogger<SaleProposedHandler> _logger;
+
     public SaleProposedHandler(DbManager db, IHasher hasher, IMediator mediator, ILogger<SaleProposedHandler> logger)
     {
         _db = db;
@@ -24,13 +26,20 @@ public class SaleProposedHandler : IProposedOfferStrategy
         _mediator = mediator;
         _logger = logger;
     }
+
     public OfferTye Target => OfferTye.Sale;
-    List<SaleOfferStatus> NotAllowedStatus = new List<SaleOfferStatus> {SaleOfferStatus.Proposed, SaleOfferStatus.Countered, SaleOfferStatus.Accepted};
+    private static readonly List<SaleOfferStatus> NotAllowedStatus = new()
+    {
+        SaleOfferStatus.Proposed,
+        SaleOfferStatus.Countered,
+        SaleOfferStatus.Accepted
+    };
+
     public async Task<Result<MessageResponseDTO>> ProposedStrategy(int UserId, ProposedItemDTO proposedItem, CancellationToken cancellation)
     {
-        if(proposedItem.SalePayload is null)
+        if (proposedItem.SalePayload is null)
         {
-            return Result<MessageResponseDTO>.Failure($"Invalid request: Missing data", StatusCodes.Status400BadRequest);
+            return Result<MessageResponseDTO>.Failure("Invalid request: Missing data", StatusCodes.Status400BadRequest);
         }
         if (proposedItem.SalePayload.QuantityRequested <= 0)
         {
@@ -40,28 +49,34 @@ public class SaleProposedHandler : IProposedOfferStrategy
         {
             return Result<MessageResponseDTO>.Failure("Proposed price per unit cannot be negative.", StatusCodes.Status400BadRequest);
         }
-        var Decoded = _hasher.DecodeOrFail(proposedItem.ItemId, HashContext.Product);
-        if (!Decoded.IsSuccess)
+
+        var decoded = _hasher.DecodeOrFail(proposedItem.ItemId, HashContext.Product);
+        if (!decoded.IsSuccess)
         {
-            return Result<MessageResponseDTO>.Failure(Decoded.Error!, Decoded.StatusCode);
+            return Result<MessageResponseDTO>.Failure(decoded.Error!, decoded.StatusCode);
         }
-        int ItemId = Decoded.Value;
-        var IsAlreadyHasOffer = await _db.SaleOffers
+        int itemId = decoded.Value;
+
+        var isAlreadyHasOffer = await _db.SaleOffers
             .AsNoTracking()
             .Where(i =>  
                 i.RespondedAt == null &&
-                i.ItemId == ItemId &&
+                i.ItemId == itemId &&
                 NotAllowedStatus.Contains(i.Status) &&
                 i.Room.Participants.Any(p => p.UserId == UserId))
             .FirstOrDefaultAsync(cancellation);
-        if(IsAlreadyHasOffer is not null){
-            return Result<MessageResponseDTO>.Failure($"You already has ongoing transaction in this Item.", StatusCodes.Status400BadRequest);
+
+        if (isAlreadyHasOffer is not null)
+        {
+            return Result<MessageResponseDTO>.Failure("You already have an ongoing transaction for this item.", StatusCodes.Status400BadRequest);
         }
+
         var product = await _db.Products
             .AsNoTracking()
-            .Where(p => p.Id == ItemId)
+            .Where(p => p.Id == itemId)
             .Select(p => new { p.Id, p.OwnerUserId, p.IsActive, p.IsAvailable, p.ProductAvailable })
             .FirstOrDefaultAsync(cancellation);
+
         if (product is null)
         {
             return Result<MessageResponseDTO>.Failure("The item does not exist.", StatusCodes.Status404NotFound);
@@ -74,59 +89,100 @@ public class SaleProposedHandler : IProposedOfferStrategy
         {
             return Result<MessageResponseDTO>.Failure("You cannot make an offer on your own product.", StatusCodes.Status400BadRequest);
         }
+
         int productOwnerId = product.OwnerUserId;
-        using var Transaction = await _db.Database.BeginTransactionAsync(cancellation);
-        try{    
-            int affectedRow = await _db.Products.Where(p => p.Id == ItemId && p.ProductAvailable >= proposedItem.SalePayload.QuantityRequested)
+
+        using var transaction = await _db.Database.BeginTransactionAsync(cancellation);
+        try
+        {
+            int affectedRow = await _db.Products
+                .Where(p => p.Id == itemId && p.ProductAvailable >= proposedItem.SalePayload.QuantityRequested)
                 .ExecuteUpdateAsync(setter => setter
                     .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable - proposedItem.SalePayload.QuantityRequested)
-                    .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut + proposedItem.SalePayload.QuantityRequested)
-                    );
-            if(affectedRow == 0)
+                    .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut + proposedItem.SalePayload.QuantityRequested),
+                    cancellation
+                );
+
+            if (affectedRow == 0)
             {
-                return Result<MessageResponseDTO>.Failure("The item is does not have enough stock for request", StatusCodes.Status400BadRequest);
+                return Result<MessageResponseDTO>.Failure("The item does not have enough stock for this request.", StatusCodes.Status400BadRequest);
             }
+
             GetRoomDataCommand command = new GetRoomDataCommand(UserId, _hasher.CreateHashids(productOwnerId, HashContext.User), null);
             var result = await _mediator.Send(command, cancellation);
             if (!result.IsSuccess)
             {
+                await transaction.RollbackAsync(cancellation);
                 return Result<MessageResponseDTO>.Failure(result.Error!, result.StatusCode);
-            } 
-            SaleOffer NewSaleOffer = new SaleOffer
+            }
+
+            var newSaleOffer = new SaleOffer
             {
                 RoomId = result.Value!.RoomId,
                 ProposedByUserId = UserId,
-                ItemId = ItemId,
+                SellerUserId = productOwnerId,
+                ItemId = itemId,
                 QuantityRequested = proposedItem.SalePayload.QuantityRequested,
-                PricePerUnit = proposedItem.SalePayload.ProposedPricePerunit
+                PricePerUnit = proposedItem.SalePayload.ProposedPricePerunit,
+                Status = SaleOfferStatus.Proposed,
+                Version = 1,
+                CreatedAt = DateTime.UtcNow
             };
-            await _db.SaleOffers.AddAsync(NewSaleOffer, cancellation);
+
+            await _db.SaleOffers.AddAsync(newSaleOffer, cancellation);
             await _db.SaveChangesAsync(cancellation);
-            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Proposed, NewSaleOffer.Id);
-            SendMessage sendMessage = new SendMessage(_hasher.CreateHashids(result.Value!.RoomId, HashContext.Room), "Offer proposed message", null, MessageType.OfferProposed, offerPayload);
-            UnifiedChat.MessageCommand messageCommand = new UnifiedChat.MessageCommand(UserId, sendMessage);
-            var MessageResult = await _mediator.Send(messageCommand, cancellation);
-            if (!MessageResult.IsSuccess)
+
+            var initialEvent = new SaleOfferEvent
             {
-                return Result<MessageResponseDTO>.Failure(MessageResult.Error!, MessageResult.StatusCode);
+                SaleOfferId = newSaleOffer.Id,
+                Version = 1,
+                FromStatus = null,
+                ToStatus = SaleOfferStatus.Proposed,
+                PricePerUnit = newSaleOffer.PricePerUnit,
+                QuantityRequested = newSaleOffer.QuantityRequested,
+                ActorUserId = UserId,
+                CreatedAt = newSaleOffer.CreatedAt
+            };
+
+            await _db.SaleOfferEvents.AddAsync(initialEvent, cancellation);
+            await _db.SaveChangesAsync(cancellation);
+
+            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Proposed, newSaleOffer.Id);
+            SendMessage sendMessage = new SendMessage(
+                _hasher.CreateHashids(result.Value!.RoomId, HashContext.Room),
+                "Offer proposed message",
+                null,
+                MessageType.OfferProposed,
+                offerPayload
+            );
+
+            UnifiedChat.MessageCommand messageCommand = new UnifiedChat.MessageCommand(UserId, sendMessage);
+            var messageResult = await _mediator.Send(messageCommand, cancellation);
+            if (!messageResult.IsSuccess)
+            {
+                await transaction.RollbackAsync(cancellation);
+                return Result<MessageResponseDTO>.Failure(messageResult.Error!, messageResult.StatusCode);
             }
+
             await _db.OutboxEntries.AddAsync(
                 new OutboxEntry
                 {
                     EntityType = DTOs.Documentation.DocumentTarget.Product,
-                    EntityId = ItemId
-                }
+                    EntityId = itemId
+                },
+                cancellation
             );
+
             await _db.SaveChangesAsync(cancellation);
-            await Transaction.CommitAsync(cancellation);
-            return  Result<MessageResponseDTO>.Success(MessageResult.Value!);
+            await transaction.CommitAsync(cancellation);
+
+            return Result<MessageResponseDTO>.Success(messageResult.Value!);
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             _logger.LogError(e, "An unexpected error occurred while handling ProposedStrategyHandler for user {UserId}. Details: {@ProposedItem}", UserId, proposedItem);
-            await Transaction.RollbackAsync(cancellation);
+            await transaction.RollbackAsync(cancellation);
             return Result<MessageResponseDTO>.Failure("An unexpected error occurred in our server.", StatusCodes.Status500InternalServerError);
         }
     }
-
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Security;
 using ChatSystem.ErrorHandling;
@@ -23,17 +24,21 @@ public class SaleOffer
     public int ProposedByUserId {get; set;} 
     [ForeignKey("ProposedByUserId")]
     public User UserProposed {get; set;} = null!;
-    public int? ParentId {get; set;}
-    [ForeignKey("ParentId")]
-    public SaleOffer? ParentSaleOffer;
     public int ItemId {get; set;}
     [ForeignKey("ItemId")]
     public Product ItemDetails {get; set;} = null!;
+    public int SellerUserId { get; set; }
+    [ForeignKey(nameof(SellerUserId))]
+    public User Seller { get; set; } = null!;
     public int QuantityRequested {get; set;}
     public decimal PricePerUnit {get; set;}
     public SaleOfferStatus Status {get; set;}
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? RespondedAt { get; set; }
+    [ConcurrencyCheck]
+    public int Version { get; set; } = 1;
+    public ICollection<SaleOfferEvent> Events { get; set; } = new List<SaleOfferEvent>();
+
 
     private static readonly Dictionary<SaleOfferStatus, SaleOfferStatus[]> _AllowedToTransition = new()
     {

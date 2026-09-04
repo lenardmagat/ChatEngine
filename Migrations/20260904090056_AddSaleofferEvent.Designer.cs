@@ -3,6 +3,7 @@ using System;
 using ChatSystem.DataBase;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(DbManager))]
-    partial class DbManagerModelSnapshot : ModelSnapshot
+    [Migration("20260904090056_AddSaleofferEvent")]
+    partial class AddSaleofferEvent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -271,47 +274,6 @@ namespace WebApplication1.Migrations
                     b.ToTable("SaleOffers");
                 });
 
-            modelBuilder.Entity("ChatSystem.Models.SaleOfferEvent", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("ActorUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("FromStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("PricePerUnit")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("QuantityRequested")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SaleOfferId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ToStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Version")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActorUserId");
-
-                    b.HasIndex("SaleOfferId", "Version");
-
-                    b.ToTable("SaleOfferEvents");
-                });
-
             modelBuilder.Entity("ChatSystem.Models.TradeOffer", b =>
                 {
                     b.Property<int>("Id")
@@ -517,25 +479,6 @@ namespace WebApplication1.Migrations
                     b.Navigation("UserProposed");
                 });
 
-            modelBuilder.Entity("ChatSystem.Models.SaleOfferEvent", b =>
-                {
-                    b.HasOne("ChatSystem.Models.User", "Actor")
-                        .WithMany()
-                        .HasForeignKey("ActorUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ChatSystem.Models.SaleOffer", "SaleOffer")
-                        .WithMany("Events")
-                        .HasForeignKey("SaleOfferId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Actor");
-
-                    b.Navigation("SaleOffer");
-                });
-
             modelBuilder.Entity("ChatSystem.Models.TradeOffer", b =>
                 {
                     b.HasOne("ChatSystem.Models.Product", "Product")
@@ -574,11 +517,6 @@ namespace WebApplication1.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("Participants");
-                });
-
-            modelBuilder.Entity("ChatSystem.Models.SaleOffer", b =>
-                {
-                    b.Navigation("Events");
                 });
 #pragma warning restore 612, 618
         }
