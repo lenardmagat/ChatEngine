@@ -32,6 +32,8 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
         var decoded = _hasher.DecodeHashids(itemDTO.ParentOfferId, HashContext.SaleOffer);
         int offerId = decoded.Value;
         var offer = await _db.SaleOffers
+            .Include(o => o.Room)
+                .ThenInclude(r => r.Participants)
             .Where(s => s.Id == offerId)
             .FirstOrDefaultAsync(cancellationToken);
 

@@ -6,12 +6,13 @@ using ChatSystem.Models;
 using ChatSystem.Services.Interfaces;
 using ChatSystem.SystemEvents.Chats;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace ChatSystem.EventHandler.Chats;
 public class SendMessageTextStrategy : IMessageStrategy
 {
-    public MessageType Target => MessageType.Text;
+    public MessageType Target => MessageType.OfferAccepted;
     private readonly DbManager _db;
     private readonly IHasher _hasher;
     private readonly IMediator _mediator;
@@ -48,6 +49,21 @@ public class SendMessageTextStrategy : IMessageStrategy
             };
             await _db.Messages.AddAsync(newMessage, cancellation);
             await _db.SaveChangesAsync(cancellation);
+            var saleOffer = await _db.SaleOffers
+                    .AsNoTracking()
+                    .Where(s => s.Id == request.OfferPayload.offerId)
+                    .Select(s => new
+                    {
+                        s.Id,
+                        s.ItemId,
+                        ItemName = s.ItemDetails.ProductName,
+                        s.QuantityRequested,
+                        s.PricePerUnit,
+                        s.Status,
+                        ProposedByUsername = s.UserProposed.Username,
+                        s.CreatedAt
+                    })
+                    .FirstOrDefaultAsync(cancellation);
             MessageResponseDTO  messageResponseDTO = new MessageResponseDTO(
                 _hasher.CreateHashids(newMessage.RoomId, HashContext.Room),
                 _hasher.CreateHashids(RoomData.ReceiverId, HashContext.User),
@@ -55,19 +71,19 @@ public class SendMessageTextStrategy : IMessageStrategy
                     _hasher.CreateHashids(newMessage.Id, HashContext.Message),
                     newMessage.MessageText,
                     newMessage.TimeStamp,
-                    newMessage.Sender.Username,
-                    _hasher.CreateHashids(newMessage.SenderId, HashContext.User),
-                    new SaleOfferResponseDTO(
-                        _hasher.CreateHashids(newMessage.SaleOffer!.Id, HashContext.SaleOffer),
-                        _hasher.CreateHashids(newMessage.SaleOffer.ItemId, HashContext.Product),
-                        newMessage.SaleOffer.ItemDetails.ProductName,
-                        newMessage.SaleOffer.QuantityRequested,
-                        newMessage.SaleOffer.PricePerUnit,
-                        newMessage.SaleOffer.PricePerUnit * newMessage.SaleOffer.QuantityRequested,
-                        newMessage.SaleOffer.Status.ToString(),
-                        newMessage.SaleOffer.UserProposed.Username,
-                        newMessage.SaleOffer.CreatedAt
-                    ),
+                    RoomData.ReceiverUsername, // Sender username — already fetched via GetRoomDataCommand
+                        _hasher.CreateHashids(newMessage.SenderId, HashContext.User),
+                        new SaleOfferResponseDTO(
+                            _hasher.CreateHashids(saleOffer!.Id, HashContext.SaleOffer),
+                            _hasher.CreateHashids(saleOffer.ItemId, HashContext.Product),
+                            saleOffer.ItemName,
+                            saleOffer.QuantityRequested,
+                            saleOffer.PricePerUnit,
+                            saleOffer.PricePerUnit * saleOffer.QuantityRequested,
+                            saleOffer.Status.ToString(),
+                            saleOffer.ProposedByUsername,
+                            saleOffer.CreatedAt
+                        ),
                     MessageType.OfferAccepted,
                     OfferTye.Sale
                 )
