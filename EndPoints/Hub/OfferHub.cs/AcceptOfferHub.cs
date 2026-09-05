@@ -28,9 +28,9 @@ public partial class AppHub
             }
             else
             {
-                await Clients.Caller.SendAsync("ProposedOfferResponse", result.Value);
-                await Clients.Groups($"UsersNotification_{result.Value!.ReceipientId}").SendAsync("NewMessageNotification", result.Value);
-                await Clients.Groups($"Room_{result.Value!.RoomId}").SendAsync("NewMessage", result.Value);
+                await Clients.Caller.SendAsync("ProposedOfferResponse", result.Value!.MessageData);
+                await Clients.Groups($"UsersNotification_{result.Value!.ReceipientId}").SendAsync("NewMessageNotification", result.Value.MessageData);
+                await Clients.Groups($"Room_{result.Value!.RoomId}").SendAsync("NewMessage", result.Value.MessageData);
                 _logger.LogInformation($"User {UserId} Successfully Accept an item. Detals :{acceptItem}. timestampt: {DateTime.UtcNow}");
             } 
         }catch(Exception e)

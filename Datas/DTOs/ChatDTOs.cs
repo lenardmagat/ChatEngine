@@ -44,7 +44,7 @@ public record MessageData(
     string SenderId,
     SaleOfferResponseDTO? SaleOfferDetails,
     MessageType Type = MessageType.Text,
-    string OfferCategory = "Text"
+    OfferTye? OfferCategory = null
 );
 public record ChatData(
     bool IsNew,

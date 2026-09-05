@@ -63,12 +63,17 @@ public class SendMessageTextStrategy : IMessageStrategy
             string hashedRoomId = _hasher.CreateHashids(RoomData.RoomId, HashContext.Room);
             string hashedRecipientId = _hasher.CreateHashids(RoomData.ReceiverId, HashContext.User);
             return Result<MessageResponseDTO>.Success( new MessageResponseDTO(
-                newMessageHashedId, 
                 hashedRoomId, 
-                RoomData.ReceiverUsername, 
-                request.Message, 
-                newMessage.TimeStamp.ToString(), 
-                hashedRecipientId
+                hashedRecipientId,
+                new MessageData(
+                    newMessageHashedId,
+                    newMessage.MessageText,
+                    newMessage.TimeStamp,
+                    newMessage.Sender.Username,
+                    _hasher.CreateHashids(newMessage.SenderId, HashContext.User),
+                    null,
+                    MessageType.Text
+                ) 
             )
         );
     }

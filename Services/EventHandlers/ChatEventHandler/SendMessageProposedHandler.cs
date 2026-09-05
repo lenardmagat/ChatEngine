@@ -46,12 +46,27 @@ public class SendMessageProposedStrategy : IMessageStrategy
                 await _db.SaveChangesAsync(cancellation);
 
                 MessageResponseDTO messageResponse = new MessageResponseDTO(
-                    _hasher.CreateHashids(Newmessage.Id, HashContext.Message),
                     _hasher.CreateHashids(Newmessage.RoomId, HashContext.Room),
-                    roomData!.ReceiverUsername,
-                    Newmessage.MessageText,
-                    DateTime.UtcNow.ToString(),
-                    _hasher.CreateHashids(roomData.ReceiverId, HashContext.User)
+                    _hasher.CreateHashids(roomData!.ReceiverId, HashContext.User),
+                    new MessageData(
+                        _hasher.CreateHashids(Newmessage.Id, HashContext.Message),
+                        Newmessage.MessageText,
+                        Newmessage.TimeStamp,
+                        Newmessage.Sender.Username,
+                        _hasher.CreateHashids(Newmessage.SenderId, HashContext.User),
+                        new SaleOfferResponseDTO(
+                            _hasher.CreateHashids(Newmessage.SaleOffer!.Id, HashContext.SaleOffer),
+                            _hasher.CreateHashids(Newmessage.SaleOffer.ItemId, HashContext.Product),
+                            Newmessage.SaleOffer.ItemDetails.ProductName,
+                            Newmessage.SaleOffer.QuantityRequested,
+                            Newmessage.SaleOffer.PricePerUnit,
+                            Newmessage.SaleOffer.PricePerUnit * Newmessage.SaleOffer.QuantityRequested,
+                            Newmessage.SaleOffer.Status.ToString(),
+                            Newmessage.SaleOffer.UserProposed.Username,
+                            Newmessage.SaleOffer.CreatedAt
+                        ),
+                        MessageType.OfferProposed
+                    )
                 );
                 return Result<MessageResponseDTO>.Success(messageResponse);
             }
