@@ -1,0 +1,83 @@
+using ChatSystem.core;
+using ChatSystem.DataBase;
+using ChatSystem.DTOs;
+using ChatSystem.ErrorHandling;
+using ChatSystem.Models;
+using ChatSystem.Services.Interfaces;
+using ChatSystem.SystemEvents.Chats;
+using MediatR;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace ChatSystem.EventHandler.Chats;
+public class SendMessageTextStrategy : IMessageStrategy
+{
+    public MessageType Target => MessageType.Text;
+    private readonly DbManager _db;
+    private readonly IHasher _hasher;
+    private readonly IMediator _mediator;
+    ILogger<SendMessageTextStrategy> _logger;
+    public SendMessageTextStrategy(IMediator mediator, DbManager db, IHasher hasher, ILogger<SendMessageTextStrategy> logger)
+    {
+        _db = db;
+        _hasher = hasher;
+        _mediator = mediator;
+        _logger = logger;
+    }
+    public async Task<Result<MessageResponseDTO>> MessageHandler(int UserId, SendMessage request, CancellationToken cancellation)
+    {
+        
+        try
+        {
+            GetRoomDataCommand command = new GetRoomDataCommand(UserId, request.RecieverId, request.RoomId);
+            var RoomDataResult = await _mediator.Send(command, cancellation);
+
+            if (!RoomDataResult.IsSuccess)
+            {
+                return Result<MessageResponseDTO>.Failure(RoomDataResult.Error!, RoomDataResult.StatusCode);
+            }
+            
+            var RoomData = RoomDataResult.Value;
+            var newMessage = new ChatMessage
+            {
+                RoomId = RoomData!.RoomId,
+                SenderId = UserId,
+                MessageText = request.Message,
+                TimeStamp = DateTime.UtcNow,
+                Type = MessageType.OfferAccepted,
+                SaleOfferId = request.OfferPayload!.offerId
+            };
+            await _db.Messages.AddAsync(newMessage, cancellation);
+            await _db.SaveChangesAsync(cancellation);
+            MessageResponseDTO  messageResponseDTO = new MessageResponseDTO(
+                _hasher.CreateHashids(newMessage.RoomId, HashContext.Room),
+                _hasher.CreateHashids(RoomData.ReceiverId, HashContext.User),
+                new MessageData(
+                    _hasher.CreateHashids(newMessage.Id, HashContext.Message),
+                    newMessage.MessageText,
+                    newMessage.TimeStamp,
+                    newMessage.Sender.Username,
+                    _hasher.CreateHashids(newMessage.SenderId, HashContext.User),
+                    new SaleOfferResponseDTO(
+                        _hasher.CreateHashids(newMessage.SaleOffer!.Id, HashContext.SaleOffer),
+                        _hasher.CreateHashids(newMessage.SaleOffer.ItemId, HashContext.Product),
+                        newMessage.SaleOffer.ItemDetails.ProductName,
+                        newMessage.SaleOffer.QuantityRequested,
+                        newMessage.SaleOffer.PricePerUnit,
+                        newMessage.SaleOffer.PricePerUnit * newMessage.SaleOffer.QuantityRequested,
+                        newMessage.SaleOffer.Status.ToString(),
+                        newMessage.SaleOffer.UserProposed.Username,
+                        newMessage.SaleOffer.CreatedAt
+                    ),
+                    MessageType.OfferAccepted,
+                    OfferTye.Sale
+                )
+            );
+            return Result<MessageResponseDTO>.Success(messageResponseDTO);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while sending message.");
+            return Result<MessageResponseDTO>.Failure("An error occurred while sending the message.", StatusCodes.Status500InternalServerError);
+        }
+    }
+}

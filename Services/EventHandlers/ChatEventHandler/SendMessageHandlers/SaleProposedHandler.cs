@@ -6,6 +6,7 @@ using ChatSystem.Models;
 using ChatSystem.Services.Interfaces;
 using ChatSystem.SystemEvents.Chats;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace ChatSystem.EventHandler.Chats;
 public class SendMessageProposedStrategy : IMessageStrategy
@@ -45,6 +46,24 @@ public class SendMessageProposedStrategy : IMessageStrategy
                 await _db.Messages.AddAsync(Newmessage, cancellation);
                 await _db.SaveChangesAsync(cancellation);
 
+                // After SaveChanges, navigation properties (Sender, SaleOffer, ItemDetails, UserProposed)
+                // are NOT auto-populated — we must load the SaleOffer explicitly.
+                var saleOffer = await _db.SaleOffers
+                    .AsNoTracking()
+                    .Where(s => s.Id == request.OfferPayload.offerId)
+                    .Select(s => new
+                    {
+                        s.Id,
+                        s.ItemId,
+                        ItemName = s.ItemDetails.ProductName,
+                        s.QuantityRequested,
+                        s.PricePerUnit,
+                        s.Status,
+                        ProposedByUsername = s.UserProposed.Username,
+                        s.CreatedAt
+                    })
+                    .FirstOrDefaultAsync(cancellation);
+
                 MessageResponseDTO messageResponse = new MessageResponseDTO(
                     _hasher.CreateHashids(Newmessage.RoomId, HashContext.Room),
                     _hasher.CreateHashids(roomData!.ReceiverId, HashContext.User),
@@ -52,20 +71,21 @@ public class SendMessageProposedStrategy : IMessageStrategy
                         _hasher.CreateHashids(Newmessage.Id, HashContext.Message),
                         Newmessage.MessageText,
                         Newmessage.TimeStamp,
-                        Newmessage.Sender.Username,
+                        roomData.ReceiverUsername, // Sender username — already fetched via GetRoomDataCommand
                         _hasher.CreateHashids(Newmessage.SenderId, HashContext.User),
                         new SaleOfferResponseDTO(
-                            _hasher.CreateHashids(Newmessage.SaleOffer!.Id, HashContext.SaleOffer),
-                            _hasher.CreateHashids(Newmessage.SaleOffer.ItemId, HashContext.Product),
-                            Newmessage.SaleOffer.ItemDetails.ProductName,
-                            Newmessage.SaleOffer.QuantityRequested,
-                            Newmessage.SaleOffer.PricePerUnit,
-                            Newmessage.SaleOffer.PricePerUnit * Newmessage.SaleOffer.QuantityRequested,
-                            Newmessage.SaleOffer.Status.ToString(),
-                            Newmessage.SaleOffer.UserProposed.Username,
-                            Newmessage.SaleOffer.CreatedAt
+                            _hasher.CreateHashids(saleOffer!.Id, HashContext.SaleOffer),
+                            _hasher.CreateHashids(saleOffer.ItemId, HashContext.Product),
+                            saleOffer.ItemName,
+                            saleOffer.QuantityRequested,
+                            saleOffer.PricePerUnit,
+                            saleOffer.PricePerUnit * saleOffer.QuantityRequested,
+                            saleOffer.Status.ToString(),
+                            saleOffer.ProposedByUsername,
+                            saleOffer.CreatedAt
                         ),
-                        MessageType.OfferProposed
+                        MessageType.OfferProposed,
+                        OfferTye.Sale
                     )
                 );
                 return Result<MessageResponseDTO>.Success(messageResponse);

@@ -45,7 +45,7 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
             return Result<MessageResponseDTO>.Failure("You cannot accept your own offer.", StatusCodes.Status400BadRequest);
         }
 
-        if (offer.SellerUserId != UserId)
+        if (offer.Room.Participants.Any(p => p.UserId == UserId) == false)
         {
             return Result<MessageResponseDTO>.Failure("You are not authorized to accept this offer.", StatusCodes.Status403Forbidden);
         }
