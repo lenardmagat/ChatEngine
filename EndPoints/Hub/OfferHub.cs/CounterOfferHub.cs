@@ -1,0 +1,41 @@
+using ChatSystem.DTOs;
+using ChatSystem.Extensions;
+using ChatSystem.SystemEvents.UnifiedCounterMechanism;
+using Microsoft.AspNetCore.SignalR;
+namespace ChatSystem.Hubs;
+public partial class AppHub
+{
+    public async Task CounterOffer(CounterOfferDTO counterOffer)
+    {
+        var userId = Context.User!.GetUserId()!.Value;
+        try
+        {
+            UnifiedCounterOffer.CounterOfferCommand counterOfferCommand = new UnifiedCounterOffer.CounterOfferCommand
+            (
+                userId,
+                counterOffer
+            );
+            var result = await _mediator.Send(counterOfferCommand);
+            if (!result.IsSuccess)
+            {
+                await Clients.Caller.SendAsync("CounterOfferResponse", new
+                {
+                    Details = result,
+                    timestampt = DateTime.UtcNow
+                }
+                );
+            }
+            else
+            {
+                await Clients.Caller.SendAsync("CounterOfferResponse", result.Value!.MessageData);
+                await Clients.Groups($"UsersNotification_{result.Value!.ReceipientId}").SendAsync("NewMessageNotification", result.Value.MessageData);
+                await Clients.Groups($"Room_{result.Value!.RoomId}").SendAsync("NewMessage", result.Value.MessageData);
+                _logger.LogInformation($"User {userId} Successfully Countered an item. Detals :{counterOffer}. timestampt: {DateTime.UtcNow}");
+            }
+        }catch(Exception e)
+        {
+            _logger.LogError(e, $"An unexpected error occured while handling Counter Offer endpoint, for user {userId}. Details: {counterOffer}. timestampt{DateTime.UtcNow}");
+            await Clients.Caller.SendAsync("RequestError", new {context =  "an Unexpected error occured in our server", statsCode = StatusCodes.Status500InternalServerError, timestampt = DateTime.UtcNow});
+        }
+    }
+}

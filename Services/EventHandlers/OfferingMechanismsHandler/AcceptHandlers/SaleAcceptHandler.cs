@@ -102,7 +102,7 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
             await _db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return messageResult;
-        }
+        }   
         catch (DbUpdateConcurrencyException ex)
         {
             await transaction.RollbackAsync(cancellationToken);

@@ -17,3 +17,10 @@ public record AcceptItemDTO(
     string ParentOfferId,
     string ItemId
 );
+public record CounterOfferDTO(
+    OfferTye OfferType,
+    string ParentOfferId,
+    string ItemId,
+    SaleProposedDTO? SalePayload,
+    TradeProposedDTO? Tradepayload
+);
