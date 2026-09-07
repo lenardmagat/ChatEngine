@@ -31,8 +31,7 @@ public class SaleProposedHandler : IProposedOfferStrategy
     private static readonly List<SaleOfferStatus> NotAllowedStatus = new()
     {
         SaleOfferStatus.Proposed,
-        SaleOfferStatus.Countered,
-        SaleOfferStatus.Accepted
+        SaleOfferStatus.Countered
     };
 
     public async Task<Result<MessageResponseDTO>> ProposedStrategy(int UserId, ProposedItemDTO proposedItem, CancellationToken cancellation)
