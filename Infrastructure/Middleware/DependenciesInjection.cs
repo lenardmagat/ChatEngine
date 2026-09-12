@@ -63,8 +63,10 @@ public static class DependenciesInjection
         services.AddScoped<IDocumentStrategy, ProductDocumentationStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageTextStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageProposedStrategy>();
+        services.AddScoped<IMessageStrategy, SendMessageDeclinedStrategy>();
         services.AddScoped<IProposedOfferStrategy, SaleProposedHandler>();
         services.AddScoped<IAcceptOfferStrategy, SaleAcceptOfferStrategy>();
+        services.AddScoped<IDeclineOfferStrategy, SaleDeclineOfferStrategy>();
         services.AddScoped<IJwtTokenServices, JwtServices>();
         services.AddScoped<JWTAuthServices>();
         services.AddScoped<IAuthServices, JWTAuthServices>();

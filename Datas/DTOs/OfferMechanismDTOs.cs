@@ -24,3 +24,8 @@ public record CounterOfferDTO(
     SaleProposedDTO? SalePayload,
     TradeProposedDTO? Tradepayload
 );
+public record DeclineItemDTO(
+    OfferTye OfferType,
+    string ParentOfferId,
+    string ItemId
+);
