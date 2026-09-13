@@ -9,6 +9,7 @@ using ChatSystem.Models;
 using System.Data;
 using ChatSystem.SystemEvents.Chats;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using ChatSystem.SystemEvents.UnifiedChat;
 
 namespace ChatSystem.EventHandler.OfferingMechanisms;
 public class SaleCounterOfferHandler : ICounterOfferStrategy
@@ -17,9 +18,9 @@ public class SaleCounterOfferHandler : ICounterOfferStrategy
     private readonly DbManager _db;
     private readonly IHasher _hasher;
     private readonly IMediator _mediator;
-    private readonly ILogger _logger;
+    private readonly ILogger<SaleCounterOfferHandler> _logger;
 
-    public SaleCounterOfferHandler(DbManager db, IHasher hasher, IMediator mediator, ILogger logger)
+    public SaleCounterOfferHandler(DbManager db, IHasher hasher, IMediator mediator, ILogger<SaleCounterOfferHandler> logger)
     {
         _db = db;
         _hasher = hasher;
@@ -113,7 +114,7 @@ public class SaleCounterOfferHandler : ICounterOfferStrategy
                     existingOffer.Id
                 )
             );
-            SendMessageCommand messageCommand = new SendMessageCommand(UserId, message);
+            UnifiedChat.MessageCommand messageCommand = new UnifiedChat.MessageCommand(UserId, message);
             var messageResult = await _mediator.Send(messageCommand, cancellationToken);
             if(!messageResult.IsSuccess)
             {

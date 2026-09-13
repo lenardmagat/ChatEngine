@@ -22,6 +22,8 @@ using ChatSystem.PipeLine.IsProductExisting;
 using ChatSystem.BackgroundServices;
 using ChatSystem.PipeLine.IsOfferMatch;
 using ChatSystem.PipeLine.IsOfferExisting;
+using ChatSystem.EventHandler.OfferingMechanisms;
+using ChatSystem.EventHandler.chat;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -63,9 +65,11 @@ public static class DependenciesInjection
         services.AddScoped<IDocumentStrategy, ProductDocumentationStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageTextStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageProposedStrategy>();
+        services.AddScoped<IMessageStrategy, SendMessageCounterStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageDeclinedStrategy>();
         services.AddScoped<IProposedOfferStrategy, SaleProposedHandler>();
         services.AddScoped<IAcceptOfferStrategy, SaleAcceptOfferStrategy>();
+        services.AddScoped<ICounterOfferStrategy, SaleCounterOfferHandler>();
         services.AddScoped<IDeclineOfferStrategy, SaleDeclineOfferStrategy>();
         services.AddScoped<IJwtTokenServices, JwtServices>();
         services.AddScoped<JWTAuthServices>();
