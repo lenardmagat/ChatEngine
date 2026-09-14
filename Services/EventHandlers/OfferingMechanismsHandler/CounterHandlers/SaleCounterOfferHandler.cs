@@ -58,7 +58,13 @@ public class SaleCounterOfferHandler : ICounterOfferStrategy
         {
             return Result<MessageResponseDTO>.Failure("Request is not allowed in current status of transaction.", StatusCodes.Status400BadRequest);
         }
-        if(existingOffer.ProposedByUserId == UserId && existingOffer.Status == SaleOfferStatus.Countered)
+        var lastActorId = await _db.SaleOfferEvents
+            .AsNoTracking()
+            .Where(e => e.SaleOfferId == existingOffer.Id)
+            .OrderByDescending(e => e.Version)
+            .Select(e => e.ActorUserId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if(lastActorId == UserId)
         {
             return Result<MessageResponseDTO>.Failure("You cannot counter your own counter offer.", StatusCodes.Status400BadRequest);
         }

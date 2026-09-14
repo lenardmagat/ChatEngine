@@ -41,8 +41,13 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
         {
             return Result<MessageResponseDTO>.Failure("Request is not allowed in current status of transaction.", StatusCodes.Status400BadRequest);
         }
-
-        if (offer.ProposedByUserId == UserId)
+        var lastActorId = await _db.SaleOfferEvents
+            .AsNoTracking()
+            .Where(e => e.SaleOfferId == offer.Id)
+            .OrderByDescending(e => e.Version)
+            .Select(e => e.ActorUserId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (lastActorId == UserId)
         {
             return Result<MessageResponseDTO>.Failure("You cannot accept your own offer.", StatusCodes.Status400BadRequest);
         }
