@@ -3,7 +3,8 @@ namespace ChatSystem.Models;
 public enum Roles
 {
     Admin,
-    User
+    User,
+    System
 }
 public class User
 {

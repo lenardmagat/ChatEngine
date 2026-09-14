@@ -76,8 +76,16 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
                 ActorUserId = UserId,
                 CreatedAt = DateTime.UtcNow
             };
-
             await _db.SaleOfferEvents.AddAsync(offerEvent, cancellationToken);
+
+            int affectedRow = await _db.Products.ExecuteUpdateAsync(setter => setter
+                .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - offer.QuantityRequested)
+                );
+            if(affectedRow == 0)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return Result<MessageResponseDTO>.Failure("Request cannot be handle at the current state of the product.", StatusCodes.Status400BadRequest);
+            }
 
             GetRoomDataCommand command = new GetRoomDataCommand(UserId, null, _hasher.CreateHashids(offer.RoomId, HashContext.Room));
             var result = await _mediator.Send(command, cancellationToken);

@@ -23,5 +23,10 @@ public interface IDeclineOfferStrategy
     OfferTye Target {get;}
     Task<Result<MessageResponseDTO>> DeclineStrategy(int UserId, DeclineItemDTO data, CancellationToken cancellationToken);
 }
+public interface ICompleteStrategy
+{
+    OfferTye Target {get;}
+    Task<Result<MessageResponseDTO>> CompleteStrategy(int UserId, CompleteOfferDTO data, CancellationToken cancellationToken);
+}
 
 

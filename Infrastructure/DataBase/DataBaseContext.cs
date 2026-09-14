@@ -32,5 +32,13 @@ public class DbManager : DbContext
             .WithMany()
             .HasForeignKey(e => e.ActorUserId)
             .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<User>().HasData(new User
+{
+        UserId = 4,
+        Username = "system",
+        HashedPassword = "AQAAAAIAAYagAAAAEL9f3k2Jm8q7Xh4pV6zR1s0Y...",
+        Role = Roles.System,
+        Status = false
+});
     }
 }

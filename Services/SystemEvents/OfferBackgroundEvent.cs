@@ -9,3 +9,8 @@ public record ExpiredOfferDTO
     OfferTye Type
 );
 public record ExpiredOfferCommand(ExpiredOfferDTO Value) : IRequest<Result>; 
+public record CompletedOfferDTO(
+    int OfferId,
+    OfferTye Type
+);
+public record AutoCompleteCommand(CompletedOfferDTO value) :  IRequest<Result<MessageResponseDTO>>;

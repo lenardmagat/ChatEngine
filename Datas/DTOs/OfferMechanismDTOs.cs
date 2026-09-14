@@ -29,3 +29,8 @@ public record DeclineItemDTO(
     string ParentOfferId,
     string ItemId
 );
+
+public record CompleteOfferDTO(
+    OfferTye OfferType,
+    string ParentOfferId
+);
