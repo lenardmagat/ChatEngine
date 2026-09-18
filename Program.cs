@@ -21,7 +21,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<DbManager>();
-        context.Database.Migrate();
+        context.Database.EnsureCreated();
     }
     catch (Exception ex)
     {

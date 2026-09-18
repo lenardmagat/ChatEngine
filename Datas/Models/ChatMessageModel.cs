@@ -43,4 +43,7 @@ public class ChatMessage
     public TradeOffer? TradeOffer { get; set; }
     public int? SaleOfferId {get; set;}
     public SaleOffer? SaleOffer {get; set;}
+    public int? SaleOfferEventId {get; set;}
+    [ForeignKey("SaleOfferEventId")]
+    public SaleOfferEvent SaleOfferEvent = null!;
 }

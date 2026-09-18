@@ -13,6 +13,14 @@ public class DbManager : DbContext
     public DbSet<SaleOffer> SaleOffers {get; set;} = null!;
     public DbSet<SaleOfferEvent> SaleOfferEvents {get; set;} = null!;
     public DbSet<Product> Products {get; set;} = null!;
+    public User SystemActor = new User
+    {
+        UserId = 4,
+        Username = "system",
+        HashedPassword = "AQAAAAIAAYagAAAAEL9f3k2Jm8q7Xh4pV6zR1s0Y...",
+        Role = Roles.System,
+        Status = false
+    };
     public  DbManager(DbContextOptions<DbManager> options) : base(options){}
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
