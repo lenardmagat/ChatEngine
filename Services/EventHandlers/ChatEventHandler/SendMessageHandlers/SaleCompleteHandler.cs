@@ -44,24 +44,25 @@ public class SendMessageCompleteStrategy : IMessageStrategy
                 SenderId = UserId,
                 MessageText = request.Message,
                 TimeStamp = DateTime.UtcNow,
-                Type = MessageType.OfferAccepted,
-                SaleOfferId = request.OfferPayload!.offerId
+                Type = MessageType.OfferCompleted,
+                SaleOfferId = request.OfferPayload!.offerId,
+                SaleOfferEventId = request.OfferPayload.SaleOfferEventId
             };
             await _db.Messages.AddAsync(newMessage, cancellation);
             await _db.SaveChangesAsync(cancellation);
-            var saleOffer = await _db.SaleOffers
+            var saleOfferEvent = await _db.SaleOfferEvents
                     .AsNoTracking()
-                    .Where(s => s.Id == request.OfferPayload.offerId)
-                    .Select(s => new
+                    .Where(e => e.Id == request.OfferPayload.SaleOfferEventId)
+                    .Select(e => new
                     {
-                        s.Id,
-                        s.ItemId,
-                        ItemName = s.ItemDetails.ProductName,
-                        s.QuantityRequested,
-                        s.PricePerUnit,
-                        s.Status,
-                        ProposedByUsername = s.UserProposed.Username,
-                        s.CreatedAt
+                        OfferId = e.SaleOfferId,
+                        ItemId = e.SaleOffer.ItemId,
+                        ItemName = e.SaleOffer.ItemDetails.ProductName,
+                        e.QuantityRequested,
+                        e.PricePerUnit,
+                        Status = e.ToStatus,
+                        ProposedByUsername = e.Actor.Username,
+                        e.CreatedAt
                     })
                     .FirstOrDefaultAsync(cancellation);
             MessageResponseDTO  messageResponseDTO = new MessageResponseDTO(
@@ -74,15 +75,15 @@ public class SendMessageCompleteStrategy : IMessageStrategy
                     RoomData.ReceiverUsername,
                         _hasher.CreateHashids(newMessage.SenderId, HashContext.User),
                         new SaleOfferResponseDTO(
-                            _hasher.CreateHashids(saleOffer!.Id, HashContext.SaleOffer),
-                            _hasher.CreateHashids(saleOffer.ItemId, HashContext.Product),
-                            saleOffer.ItemName,
-                            saleOffer.QuantityRequested,
-                            saleOffer.PricePerUnit,
-                            saleOffer.PricePerUnit * saleOffer.QuantityRequested,
-                            saleOffer.Status.ToString(),
-                            saleOffer.ProposedByUsername,
-                            saleOffer.CreatedAt
+                            _hasher.CreateHashids(saleOfferEvent!.OfferId, HashContext.SaleOffer),
+                            _hasher.CreateHashids(saleOfferEvent.ItemId, HashContext.Product),
+                            saleOfferEvent.ItemName,
+                            saleOfferEvent.QuantityRequested,
+                            saleOfferEvent.PricePerUnit,
+                            saleOfferEvent.PricePerUnit * saleOfferEvent.QuantityRequested,
+                            saleOfferEvent.Status.ToString(),
+                            saleOfferEvent.ProposedByUsername,
+                            saleOfferEvent.CreatedAt
                         ),
                     MessageType.OfferCompleted,
                     OfferTye.Sale

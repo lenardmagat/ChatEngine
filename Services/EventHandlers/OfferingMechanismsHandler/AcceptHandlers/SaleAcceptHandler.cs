@@ -77,6 +77,7 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
                 CreatedAt = DateTime.UtcNow
             };
             await _db.SaleOfferEvents.AddAsync(offerEvent, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
 
             int affectedRow = await _db.Products.ExecuteUpdateAsync(setter => setter
                 .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - offer.QuantityRequested)
@@ -95,7 +96,7 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
                 return Result<MessageResponseDTO>.Failure(result.Error!, result.StatusCode);
             }
 
-            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Accepted, offer.Id);
+            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Accepted, offer.Id, offerEvent.Id);
             SendMessage sendMessage = new SendMessage(
                 _hasher.CreateHashids(result.Value!.RoomId, HashContext.Room),
                 "Offer Accepted",

@@ -77,12 +77,23 @@ public class InitializeChatCommandHandler : IRequestHandler<InitializeChatComman
                         m.TimeStamp,
                         m.Sender.Username,
                         m.SenderId,
-                        SaleOffer = m.SaleOffer == null ? null : new SaleOffer
+                        SaleOfferEvent = m.SaleOfferEvent == null ? null : new
+                        {
+                            SaleOfferId = m.SaleOfferEvent.SaleOfferId,
+                            ItemId = m.SaleOfferEvent.SaleOffer.ItemId,
+                            ItemName = m.SaleOfferEvent.SaleOffer.ItemDetails.ProductName,
+                            QuantityRequested = m.SaleOfferEvent.QuantityRequested,
+                            PricePerUnit = m.SaleOfferEvent.PricePerUnit,
+                            Status = m.SaleOfferEvent.ToStatus,
+                            ProposedByUsername = m.SaleOfferEvent.Actor.Username,
+                            CreatedAt = m.SaleOfferEvent.CreatedAt
+                        },
+                        SaleOffer = m.SaleOffer == null ? null : new
                         {
                             Id = m.SaleOffer.Id,
                             ItemId = m.SaleOffer.ItemId,
-                            ItemDetails = m.SaleOffer.ItemDetails,
-                            UserProposed = m.SaleOffer.UserProposed,
+                            ItemName = m.SaleOffer.ItemDetails.ProductName,
+                            UserProposedUsername = m.SaleOffer.UserProposed.Username,
                             PricePerUnit = m.SaleOffer.PricePerUnit,
                             QuantityRequested = m.SaleOffer.QuantityRequested,
                             Status = m.SaleOffer.Status,
@@ -116,26 +127,48 @@ public class InitializeChatCommandHandler : IRequestHandler<InitializeChatComman
         }
         List<MessageData> messageDatas = ChatDataProjection
             .RecentMessages
-            .Select(m => new MessageData(
-                _hasher.CreateHashids(m.Id, HashContext.Message),
-                m.MessageText,
-                m.TimeStamp,
-                m.Username,
-                _hasher.CreateHashids(m.SenderId, HashContext.User),
-                m.SaleOffer is not null ? new SaleOfferResponseDTO(
-                    _hasher.CreateHashids(m.SaleOffer.Id, HashContext.SaleOffer),
-                    _hasher.CreateHashids(m.SaleOffer.ItemId, HashContext.Product),
-                    m.SaleOffer.ItemDetails.ProductName,
-                    m.SaleOffer.QuantityRequested,
-                    m.SaleOffer.PricePerUnit,
-                    m.SaleOffer.PricePerUnit * m.SaleOffer.QuantityRequested,
-                    m.SaleOffer.Status.ToString(),
-                    m.SaleOffer.UserProposed.Username,
-                    m.SaleOffer.CreatedAt
-                ) : null,
-                m.Type
-                )
-            ).ToList();
+            .Select(m =>
+            {
+                SaleOfferResponseDTO? saleOfferDTO = null;
+                if (m.SaleOfferEvent is not null)
+                {
+                    saleOfferDTO = new SaleOfferResponseDTO(
+                        _hasher.CreateHashids(m.SaleOfferEvent.SaleOfferId, HashContext.SaleOffer),
+                        _hasher.CreateHashids(m.SaleOfferEvent.ItemId, HashContext.Product),
+                        m.SaleOfferEvent.ItemName,
+                        m.SaleOfferEvent.QuantityRequested,
+                        m.SaleOfferEvent.PricePerUnit,
+                        m.SaleOfferEvent.PricePerUnit * m.SaleOfferEvent.QuantityRequested,
+                        m.SaleOfferEvent.Status.ToString(),
+                        m.SaleOfferEvent.ProposedByUsername,
+                        m.SaleOfferEvent.CreatedAt
+                    );
+                }
+                else if (m.SaleOffer is not null)
+                {
+                    saleOfferDTO = new SaleOfferResponseDTO(
+                        _hasher.CreateHashids(m.SaleOffer.Id, HashContext.SaleOffer),
+                        _hasher.CreateHashids(m.SaleOffer.ItemId, HashContext.Product),
+                        m.SaleOffer.ItemName,
+                        m.SaleOffer.QuantityRequested,
+                        m.SaleOffer.PricePerUnit,
+                        m.SaleOffer.PricePerUnit * m.SaleOffer.QuantityRequested,
+                        m.SaleOffer.Status.ToString(),
+                        m.SaleOffer.UserProposedUsername,
+                        m.SaleOffer.CreatedAt
+                    );
+                }
+
+                return new MessageData(
+                    _hasher.CreateHashids(m.Id, HashContext.Message),
+                    m.MessageText,
+                    m.TimeStamp,
+                    m.Username,
+                    _hasher.CreateHashids(m.SenderId, HashContext.User),
+                    saleOfferDTO,
+                    m.Type
+                );
+            }).ToList();
         ChatData data = new ChatData(
             false,
             _hasher.CreateHashids(ChatDataProjection.RoomId, HashContext.Room),

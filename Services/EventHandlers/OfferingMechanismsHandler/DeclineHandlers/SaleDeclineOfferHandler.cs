@@ -105,6 +105,7 @@ public class SaleDeclineOfferStrategy : IDeclineOfferStrategy
             };
 
             await _db.SaleOfferEvents.AddAsync(offerEvent, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
 
             await _db.OutboxEntries.AddAsync(
                 new OutboxEntry
@@ -123,7 +124,7 @@ public class SaleDeclineOfferStrategy : IDeclineOfferStrategy
                 return Result<MessageResponseDTO>.Failure(result.Error!, result.StatusCode);
             }
 
-            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Declined, offer.Id);
+            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Declined, offer.Id, offerEvent.Id);
             SendMessage sendMessage = new SendMessage(
                 _hasher.CreateHashids(result.Value!.RoomId, HashContext.Room),
                 "Offer Declined",

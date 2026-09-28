@@ -21,7 +21,8 @@ public enum OfferStatus
 public record OfferPayload(
     OfferTye Tye,
     OfferStatus Status,
-    int offerId
+    int offerId,
+    long? SaleOfferEventId = null
 );
 public record SendMessage(
     string? RoomId,

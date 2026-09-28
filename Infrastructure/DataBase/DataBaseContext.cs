@@ -40,6 +40,12 @@ public class DbManager : DbContext
             .WithMany()
             .HasForeignKey(e => e.ActorUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ChatMessage>()
+            .HasOne(m => m.SaleOfferEvent)
+            .WithMany()
+            .HasForeignKey(m => m.SaleOfferEventId);
+
         modelBuilder.Entity<User>().HasData(new User
 {
         UserId = 4,

@@ -46,7 +46,7 @@ public class AutoCompleteOfferHander(DbManager db, ILogger<AutoCompleteOfferHand
                     SenderId = db.SystemActor.UserId,
                     Type = MessageType.System,
                     MessageText = "Offer automatically completed!",
-                    SaleOfferEventId = (int)SaleEventOffer.Id,
+                    SaleOfferEventId = SaleEventOffer.Id,
                     SaleOfferId = offer.Id,
                 };
                 await db.Messages.AddAsync(message, cancellation);
@@ -58,10 +58,10 @@ public class AutoCompleteOfferHander(DbManager db, ILogger<AutoCompleteOfferHand
                     .Select(d => new
                         {
                             ParticipantsId = d.Room.Participants.Select(p => p.UserId).ToList(),
-                            offerId = d.SaleOfferEvent.Id,
+                            offerId = d.SaleOfferEvent!.Id,
                             Itemid = offer.ItemId,
                             itemName= d.SaleOffer!.ItemDetails.ProductName,
-                            proposedByusername = d.SaleOfferEvent.Actor.Username
+                            proposedByusername = d.SaleOfferEvent!.Actor.Username
                         }
                     ).FirstAsync(cancellation);
                 MessageResponseDTO responseDTO = new MessageResponseDTO(
@@ -76,13 +76,13 @@ public class AutoCompleteOfferHander(DbManager db, ILogger<AutoCompleteOfferHand
                         db.SystemActor.Username,
                         hasher.CreateHashids(db.SystemActor.UserId, HashContext.User),
                         new SaleOfferResponseDTO(
-                            hasher.CreateHashids((int)responseMessage.offerId, HashContext.SaleOffer),
+                            hasher.CreateHashids(offer.Id, HashContext.SaleOffer),
                             hasher.CreateHashids(offer.ItemId, HashContext.Product),
                             responseMessage.itemName,
-                            offer.QuantityRequested,
-                            offer.ProposedByUserId,
-                            offer.QuantityRequested * offer.ProposedByUserId,
-                            offer.Status.ToString(),
+                            SaleEventOffer.QuantityRequested,
+                            SaleEventOffer.PricePerUnit,
+                            SaleEventOffer.QuantityRequested * SaleEventOffer.PricePerUnit,
+                            SaleEventOffer.ToStatus.ToString(),
                             responseMessage.proposedByusername,
                             SaleEventOffer.CreatedAt
                             ),

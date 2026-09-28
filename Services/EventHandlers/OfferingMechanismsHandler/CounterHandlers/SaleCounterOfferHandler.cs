@@ -102,6 +102,7 @@ public class SaleCounterOfferHandler : ICounterOfferStrategy
                 ActorUserId = UserId
             };
             await _db.SaleOfferEvents.AddAsync(offerEvent, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
             GetRoomDataCommand command = new GetRoomDataCommand(UserId, null, _hasher.CreateHashids(existingOffer.RoomId, HashContext.Room));
             var result = await _mediator.Send(command, cancellationToken);
             if(!result.IsSuccess)
@@ -117,7 +118,8 @@ public class SaleCounterOfferHandler : ICounterOfferStrategy
                 new OfferPayload(
                     OfferTye.Sale,
                     OfferStatus.Countered,
-                    existingOffer.Id
+                    existingOffer.Id,
+                    offerEvent.Id
                 )
             );
             UnifiedChat.MessageCommand messageCommand = new UnifiedChat.MessageCommand(UserId, message);

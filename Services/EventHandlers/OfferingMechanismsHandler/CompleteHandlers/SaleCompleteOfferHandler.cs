@@ -64,6 +64,7 @@ public class SaleCompleteOfferStrategy : ICompleteStrategy
                 CreatedAt = DateTime.UtcNow
             };
             await _db.SaleOfferEvents.AddAsync(offerEvent, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
 
             GetRoomDataCommand roomDataCommand = new GetRoomDataCommand(UserId, null, _hasher.CreateHashids(offer.RoomId, HashContext.Room));
             var RoomDataResult = await _mediator.Send(roomDataCommand, cancellationToken);
@@ -73,7 +74,7 @@ public class SaleCompleteOfferStrategy : ICompleteStrategy
                 return Result<MessageResponseDTO>.Failure(RoomDataResult.Error!, RoomDataResult.StatusCode);
             }
 
-            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Completed, offer.Id);
+            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Completed, offer.Id, offerEvent.Id);
             SendMessage sendMessage = new SendMessage(
                 _hasher.CreateHashids(RoomDataResult.Value!.RoomId, HashContext.Room),
                 "Transaction Complete!",

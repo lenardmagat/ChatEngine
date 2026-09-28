@@ -41,21 +41,24 @@ public class SendMessageCounterStrategy : IMessageStrategy
                 MessageText = "Sale offer countered",
                 TimeStamp = DateTime.UtcNow,
                 Type = MessageType.OfferCountered,
-                SaleOfferId = request.OfferPayload!.offerId
+                SaleOfferId = request.OfferPayload!.offerId,
+                SaleOfferEventId = request.OfferPayload.SaleOfferEventId
             };
             await _db.Messages.AddAsync(newMessage, cancellation);
             await _db.SaveChangesAsync(cancellation);
-            var saleOffer = await _db.SaleOffers
+            var saleOfferEvent = await _db.SaleOfferEvents
                     .AsNoTracking()
-                    .Where(s => s.Id == request.OfferPayload.offerId)
-                    .Select(s => new
+                    .Where(e => e.Id == request.OfferPayload.SaleOfferEventId)
+                    .Select(e => new
                     {
-                        s.Id,
-                        s.ItemId,
-                        ItemName = s.ItemDetails.ProductName,
-                        s.QuantityRequested,
-                        s.PricePerUnit,
-                        s.Status
+                        OfferId = e.SaleOfferId,
+                        ItemId = e.SaleOffer.ItemId,
+                        ItemName = e.SaleOffer.ItemDetails.ProductName,
+                        e.QuantityRequested,
+                        e.PricePerUnit,
+                        Status = e.ToStatus,
+                        ProposedByUsername = e.Actor.Username,
+                        e.CreatedAt
                     })
                     .FirstOrDefaultAsync(cancellation);
             MessageResponseDTO messageResponse = new MessageResponseDTO(
@@ -68,15 +71,15 @@ public class SendMessageCounterStrategy : IMessageStrategy
                     RoomData.ReceiverUsername,
                     _hasher.CreateHashids(newMessage.SenderId, HashContext.User),
                     new SaleOfferResponseDTO(
-                        _hasher.CreateHashids(saleOffer!.Id, HashContext.SaleOffer),
-                        _hasher.CreateHashids(saleOffer.ItemId, HashContext.Product),
-                        saleOffer.ItemName,
-                        saleOffer.QuantityRequested,
-                        saleOffer.PricePerUnit,
-                        saleOffer.PricePerUnit * saleOffer.QuantityRequested,
-                        saleOffer.Status.ToString(),
-                        RoomData.ReceiverUsername,
-                        DateTime.UtcNow
+                        _hasher.CreateHashids(saleOfferEvent!.OfferId, HashContext.SaleOffer),
+                        _hasher.CreateHashids(saleOfferEvent.ItemId, HashContext.Product),
+                        saleOfferEvent.ItemName,
+                        saleOfferEvent.QuantityRequested,
+                        saleOfferEvent.PricePerUnit,
+                        saleOfferEvent.PricePerUnit * saleOfferEvent.QuantityRequested,
+                        saleOfferEvent.Status.ToString(),
+                        saleOfferEvent.ProposedByUsername,
+                        saleOfferEvent.CreatedAt
                         ),
                     newMessage.Type,
                     OfferTye.Sale

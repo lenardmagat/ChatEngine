@@ -41,26 +41,25 @@ public class SendMessageProposedStrategy : IMessageStrategy
                     RoomId = _hasher.DecodeHashids(request.RoomId!, HashContext.Room).Value,
                     SenderId = UserId,
                     MessageText = "Sale offer proposed",
-                    SaleOfferId = request.OfferPayload.offerId
+                    SaleOfferId = request.OfferPayload.offerId,
+                    SaleOfferEventId = request.OfferPayload.SaleOfferEventId
                 };
                 await _db.Messages.AddAsync(Newmessage, cancellation);
                 await _db.SaveChangesAsync(cancellation);
 
-                // After SaveChanges, navigation properties (Sender, SaleOffer, ItemDetails, UserProposed)
-                // are NOT auto-populated — we must load the SaleOffer explicitly.
-                var saleOffer = await _db.SaleOffers
+                var saleOfferEvent = await _db.SaleOfferEvents
                     .AsNoTracking()
-                    .Where(s => s.Id == request.OfferPayload.offerId)
-                    .Select(s => new
+                    .Where(e => e.Id == request.OfferPayload.SaleOfferEventId)
+                    .Select(e => new
                     {
-                        s.Id,
-                        s.ItemId,
-                        ItemName = s.ItemDetails.ProductName,
-                        s.QuantityRequested,
-                        s.PricePerUnit,
-                        s.Status,
-                        ProposedByUsername = s.UserProposed.Username,
-                        s.CreatedAt
+                        OfferId = e.SaleOfferId,
+                        ItemId = e.SaleOffer.ItemId,
+                        ItemName = e.SaleOffer.ItemDetails.ProductName,
+                        e.QuantityRequested,
+                        e.PricePerUnit,
+                        Status = e.ToStatus,
+                        ProposedByUsername = e.Actor.Username,
+                        e.CreatedAt
                     })
                     .FirstOrDefaultAsync(cancellation);
 
@@ -74,15 +73,15 @@ public class SendMessageProposedStrategy : IMessageStrategy
                         roomData.ReceiverUsername, // Sender username — already fetched via GetRoomDataCommand
                         _hasher.CreateHashids(Newmessage.SenderId, HashContext.User),
                         new SaleOfferResponseDTO(
-                            _hasher.CreateHashids(saleOffer!.Id, HashContext.SaleOffer),
-                            _hasher.CreateHashids(saleOffer.ItemId, HashContext.Product),
-                            saleOffer.ItemName,
-                            saleOffer.QuantityRequested,
-                            saleOffer.PricePerUnit,
-                            saleOffer.PricePerUnit * saleOffer.QuantityRequested,
-                            saleOffer.Status.ToString(),
-                            saleOffer.ProposedByUsername,
-                            saleOffer.CreatedAt
+                            _hasher.CreateHashids(saleOfferEvent!.OfferId, HashContext.SaleOffer),
+                            _hasher.CreateHashids(saleOfferEvent.ItemId, HashContext.Product),
+                            saleOfferEvent.ItemName,
+                            saleOfferEvent.QuantityRequested,
+                            saleOfferEvent.PricePerUnit,
+                            saleOfferEvent.PricePerUnit * saleOfferEvent.QuantityRequested,
+                            saleOfferEvent.Status.ToString(),
+                            saleOfferEvent.ProposedByUsername,
+                            saleOfferEvent.CreatedAt
                         ),
                         MessageType.OfferProposed,
                         OfferTye.Sale

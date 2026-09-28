@@ -136,7 +136,7 @@ public class SaleProposedHandler : IProposedOfferStrategy
             await _db.SaleOfferEvents.AddAsync(initialEvent, cancellation);
             await _db.SaveChangesAsync(cancellation);
 
-            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Proposed, newSaleOffer.Id);
+            OfferPayload offerPayload = new OfferPayload(OfferTye.Sale, OfferStatus.Proposed, newSaleOffer.Id, initialEvent.Id);
             SendMessage sendMessage = new SendMessage(
                 _hasher.CreateHashids(result.Value!.RoomId, HashContext.Room),
                 "Offer proposed message",
