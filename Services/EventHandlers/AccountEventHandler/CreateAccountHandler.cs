@@ -2,6 +2,7 @@ using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.ErrorHandling;
 using ChatSystem.Models;
+using ChatSystem.Storage;
 using ChatSystem.SystemEvents.Accounts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,12 +12,15 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
 {
     private readonly DbManager _db;
     private readonly IHasher _hasher;
-    ILogger<CreateAccountHandler> _logger;
-    public CreateAccountHandler(DbManager db, IHasher hasher, ILogger<CreateAccountHandler> logger)
+    private readonly ILogger<CreateAccountHandler> _logger;
+    private readonly IFileStorageService _storageService;
+
+    public CreateAccountHandler(DbManager db, IHasher hasher, ILogger<CreateAccountHandler> logger,IFileStorageService fileStorage)
     {
         _db = db;
         _hasher = hasher;
         _logger = logger;
+        _storageService = fileStorage;
     }
     public async Task<Result> Handle(CreateAccountCommand command, CancellationToken cancellation)
     {
@@ -26,16 +30,40 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
             if(await _db.Users.AnyAsync(u => u.Username == command.Credentials.Username, cancellation))
                 return Result.Failure("Username already exists.", StatusCodes.Status409Conflict);
             using var transaction = await _db.Database.BeginTransactionAsync(cancellation);
+            var file = command.Credentials.ProfilePicture;
+            var fileName = !string.IsNullOrWhiteSpace(command.Credentials.FileName) 
+                ? command.Credentials.FileName 
+                : file?.FileName;
+
+            PhotoModel? profilePicture = (file != null && !string.IsNullOrWhiteSpace(fileName)) ? new PhotoModel
+            {
+                PhotoKey = $"{Guid.NewGuid()}{Path.GetExtension(fileName).ToLowerInvariant()}",
+                FileName = fileName
+            } : null;
+
+            if (profilePicture != null) 
+            {
+                await _db.Photos.AddAsync(profilePicture, cancellation);
+                await _db.SaveChangesAsync(cancellation);
+
+                var uploadResponse = await _storageService.UploadImageAsync(file!.OpenReadStream(), profilePicture.PhotoKey, fileName!);
+                if (!uploadResponse.IsSuccess)
+                {
+                    await transaction.RollbackAsync(cancellation);
+                    return Result.Failure(uploadResponse.Error!, uploadResponse.StatusCode);
+                }
+            }
+
             User newUser = new User{
-                Username =  command.Credentials.Username,
+                Username = command.Credentials.Username,
                 HashedPassword = _hasher.HashPassword(command.Credentials.password),
                 Role = Roles.User,
-                Status = true
+                Status = true,
+                PhotoId = profilePicture?.PhotoId,
+                UserProfilePicture = profilePicture
             };
-            // PhotoModel photoModel = new PhotoModeasdasdl
-            // {
-                
-            // }
+
+
             await _db.Users.AddAsync(newUser, cancellation);
             await _db.SaveChangesAsync(cancellation);
             await _db.OutboxEntries.AddAsync(new OutboxEntry{EntityId = newUser.UserId, EntityType = DTOs.Documentation.DocumentTarget.User}, cancellation);

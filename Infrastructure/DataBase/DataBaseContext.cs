@@ -47,6 +47,11 @@ public class DbManager : DbContext
             .WithMany()
             .HasForeignKey(m => m.SaleOfferEventId);
 
+        modelBuilder.Entity<User>()
+            .HasOne(m => m.UserProfilePicture)
+            .WithOne()
+            .HasForeignKey<User>(m => m.PhotoId); 
+
         modelBuilder.Entity<User>().HasData(new User
 {
         UserId = 4,

@@ -7,7 +7,7 @@ public partial class AccountController
 {
     [HttpPost("Create")]
     public async Task<IActionResult> CreateAccountEndpoint(
-            [FromBody] AccountCredentials accountCredentials,
+            [FromForm] AccountCredentials accountCredentials,
             CancellationToken cancellation
         )
     {

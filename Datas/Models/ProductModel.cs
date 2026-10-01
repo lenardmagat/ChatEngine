@@ -37,4 +37,7 @@ public class Product
     public bool IsActive {get; set;}
     public DateTime CreatedAt = DateTime.UtcNow;
     public DateTime? UpdatedA {get; set;}
+    public int? PhotoId = null;
+    [ForeignKey("PhotoId")]
+    public PhotoModel? ProductPicture = null;
 }

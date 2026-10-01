@@ -2,11 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 public record AccountCredentials(
     [Required]
-    [StringLength(12, MinimumLength = 5, ErrorMessage = "Username must contain at least 5 letters with maximum of 12.")]
+    [StringLength(20, MinimumLength = 5, ErrorMessage = "Username must contain at least 5 letters with maximum of 20.")]
     string Username,
     [Required]
     string password,
-    IFormFile? ProfilePicture = null
+    string? FileName,
+    IFormFile? ProfilePicture
 );
 public record LoginResponseData(
     [Required]

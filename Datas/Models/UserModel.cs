@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace ChatSystem.Models;
 public enum Roles
 {
@@ -15,4 +16,8 @@ public class User
     public required string HashedPassword {get; set;}
     public required Roles Role {get; set;}
     public required bool Status {get; set;}
+    public int? PhotoId {get; set;}= null;
+    [ForeignKey("PhotoId")]
+    public PhotoModel? UserProfilePicture {get; set;} 
+    
 }

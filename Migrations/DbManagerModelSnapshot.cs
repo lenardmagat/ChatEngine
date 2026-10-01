@@ -118,9 +118,19 @@ namespace WebApplication1.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PhotoId"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("PhotoKey")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("PhotoId");
 
@@ -392,6 +402,9 @@ namespace WebApplication1.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("PhotoId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
@@ -403,6 +416,9 @@ namespace WebApplication1.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("UserId");
+
+                    b.HasIndex("PhotoId")
+                        .IsUnique();
 
                     b.ToTable("Users");
 
@@ -605,6 +621,15 @@ namespace WebApplication1.Migrations
                     b.Navigation("ProposedBy");
 
                     b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("ChatSystem.Models.User", b =>
+                {
+                    b.HasOne("ChatSystem.Models.PhotoModel", "UserProfilePicture")
+                        .WithOne()
+                        .HasForeignKey("ChatSystem.Models.User", "PhotoId");
+
+                    b.Navigation("UserProfilePicture");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.ChatRoom", b =>

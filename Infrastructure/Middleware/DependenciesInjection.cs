@@ -24,6 +24,7 @@ using ChatSystem.PipeLine.IsOfferExisting;
 using ChatSystem.EventHandler.OfferingMechanisms;
 using ChatSystem.EventHandler.chat;
 using Amazon.S3;
+using ChatSystem.Storage;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -58,6 +59,10 @@ public static class DependenciesInjection
             var settings = sp.GetRequiredService<IOptions<MeiliSearchSettings>>().Value;
             return new MeilisearchClient(settings.Url, settings.MasterKey);
         });
+        services.AddOptions<StorageOptions>()
+            .Bind(configuration.GetSection("Storage"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
         services.AddSingleton<IAmazonS3>(sp =>
             {
             var opts = sp.GetRequiredService<IOptions<StorageOptions>>().Value;
@@ -68,6 +73,7 @@ public static class DependenciesInjection
                 AuthenticationRegion = "us-east-1"
             });
         });
+        services.AddScoped<IFileStorageService, R2FileStorageServices>();
         services.AddScoped<IDynamicSearchService, DynamicMeiliSearchService>(); 
         services.AddScoped<ISearchStrategy, UserSearchStrategy>();
         services.AddScoped<ISearchStrategy, ProductSearchStrategy>();

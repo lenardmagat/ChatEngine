@@ -13,7 +13,8 @@ public record UserDocumentation(
     string id,
     string Username,
     string role,
-    bool Status
+    bool Status,
+    string? ProfileImageKey
 );
 
 public record ProductDocumentation(

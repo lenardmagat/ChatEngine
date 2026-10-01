@@ -8,15 +8,20 @@ public interface IFileStorageService
 {
     Task<Result> UploadImageAsync(Stream FileStream, string FileKey, string FileName);
     Task<Result> DeleteImageAsync(string FileKey);
+    Task<bool> AllowedImageExtension(string FileName);
+    string GetImageUrl(string ImageKey);
 }
 public class R2FileStorageServices : IFileStorageService
 {
     private readonly IAmazonS3 _s3Client;
     private readonly string _bucketName;
+    private readonly string _publicUrl;
+    private readonly List<string> AllowedExtensionType = [".jpeg", ".jpg", ".png"];
     public R2FileStorageServices(IAmazonS3 s3Client, IOptions<StorageOptions> options)
     {
         _s3Client = s3Client;
         _bucketName = options.Value.Bucket;
+        _publicUrl = options.Value.PublicEndpoint;
     }
     public async Task<Result> UploadImageAsync(Stream FileStream, string FileKey, string FileName)
     {
@@ -26,7 +31,7 @@ public class R2FileStorageServices : IFileStorageService
                 Key = FileKey,
                 InputStream = FileStream,
                 ContentType = GetImageContentType(FileName),
-                DisablePayloadSigning = true   
+                DisablePayloadSigning = false   
             }
         );
         if(streamResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
@@ -44,6 +49,16 @@ public class R2FileStorageServices : IFileStorageService
         }
         return Result.Success();
     }
+    public async Task<bool> AllowedImageExtension(string FileName)
+    {
+        string fileExtension = Path.GetExtension(FileName).ToLowerInvariant();
+        if (!AllowedExtensionType.Contains(fileExtension))
+        {
+            return false;
+        }
+        return true;
+    }
+    public string GetImageUrl(string ImageKey) => $"{_publicUrl}/{_bucketName}/{ImageKey}";
     private string GetImageContentType(string FileName)
     {
         var extension = Path.GetExtension(FileName).ToLowerInvariant();
