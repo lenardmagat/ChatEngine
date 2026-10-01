@@ -5,5 +5,12 @@ Properties/
 appsettings.Development.json
 appsettings.json
 Routers/ForTestingRouters
-a.env
 .env
+/default-assets
+/storage
+/Migrations
+chat_postgres_db.session.sql
+INSERT INTO Messages (.sql
+
+
+

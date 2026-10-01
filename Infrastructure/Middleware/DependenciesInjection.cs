@@ -23,6 +23,7 @@ using ChatSystem.PipeLine.IsOfferMatch;
 using ChatSystem.PipeLine.IsOfferExisting;
 using ChatSystem.EventHandler.OfferingMechanisms;
 using ChatSystem.EventHandler.chat;
+using Amazon.S3;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -56,6 +57,16 @@ public static class DependenciesInjection
         {
             var settings = sp.GetRequiredService<IOptions<MeiliSearchSettings>>().Value;
             return new MeilisearchClient(settings.Url, settings.MasterKey);
+        });
+        services.AddSingleton<IAmazonS3>(sp =>
+            {
+            var opts = sp.GetRequiredService<IOptions<StorageOptions>>().Value;
+            return new AmazonS3Client(opts.AccessKey, opts.SecretKey, new AmazonS3Config
+            {
+                ServiceURL = opts.InternalEndpoint,
+                ForcePathStyle = true,
+                AuthenticationRegion = "us-east-1"
+            });
         });
         services.AddScoped<IDynamicSearchService, DynamicMeiliSearchService>(); 
         services.AddScoped<ISearchStrategy, UserSearchStrategy>();

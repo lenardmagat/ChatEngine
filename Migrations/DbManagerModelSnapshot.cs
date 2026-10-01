@@ -49,8 +49,8 @@ namespace WebApplication1.Migrations
                     b.Property<int>("RoomId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SaleOfferEventId")
-                        .HasColumnType("integer");
+                    b.Property<long?>("SaleOfferEventId")
+                        .HasColumnType("bigint");
 
                     b.Property<int?>("SaleOfferId")
                         .HasColumnType("integer");
@@ -70,6 +70,8 @@ namespace WebApplication1.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RoomId");
+
+                    b.HasIndex("SaleOfferEventId");
 
                     b.HasIndex("SaleOfferId");
 
@@ -106,6 +108,23 @@ namespace WebApplication1.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Chatrooms");
+                });
+
+            modelBuilder.Entity("ChatSystem.Models.PhotoModel", b =>
+                {
+                    b.Property<int>("PhotoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PhotoId"));
+
+                    b.Property<string>("PhotoKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("PhotoId");
+
+                    b.ToTable("Photos");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.Product", b =>
@@ -431,6 +450,10 @@ namespace WebApplication1.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ChatSystem.Models.SaleOfferEvent", "SaleOfferEvent")
+                        .WithMany()
+                        .HasForeignKey("SaleOfferEventId");
+
                     b.HasOne("ChatSystem.Models.SaleOffer", "SaleOffer")
                         .WithMany()
                         .HasForeignKey("SaleOfferId");
@@ -448,6 +471,8 @@ namespace WebApplication1.Migrations
                     b.Navigation("Room");
 
                     b.Navigation("SaleOffer");
+
+                    b.Navigation("SaleOfferEvent");
 
                     b.Navigation("Sender");
 

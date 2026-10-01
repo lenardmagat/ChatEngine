@@ -5,7 +5,8 @@ public record AccountCredentials(
     [StringLength(12, MinimumLength = 5, ErrorMessage = "Username must contain at least 5 letters with maximum of 12.")]
     string Username,
     [Required]
-    string password
+    string password,
+    IFormFile? ProfilePicture = null
 );
 public record LoginResponseData(
     [Required]

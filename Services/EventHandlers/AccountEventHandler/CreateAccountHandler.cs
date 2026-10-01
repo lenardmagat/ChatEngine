@@ -32,6 +32,10 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
                 Role = Roles.User,
                 Status = true
             };
+            // PhotoModel photoModel = new PhotoModeasdasdl
+            // {
+                
+            // }
             await _db.Users.AddAsync(newUser, cancellation);
             await _db.SaveChangesAsync(cancellation);
             await _db.OutboxEntries.AddAsync(new OutboxEntry{EntityId = newUser.UserId, EntityType = DTOs.Documentation.DocumentTarget.User}, cancellation);

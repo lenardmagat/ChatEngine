@@ -25,3 +25,11 @@ public class MeiliSearchSettings
     [Required(ErrorMessage = "Meilisearch ApiKey is required")]
     public string MasterKey { get; set; } = string.Empty;
 }
+public class StorageOptions
+{
+    [Required] public string InternalEndpoint { get; set; } = default!;
+    [Required] public string PublicEndpoint { get; set; } = default!;
+    [Required] public string AccessKey { get; set; } = default!;
+    [Required] public string SecretKey { get; set; } = default!;
+    [Required] public string Bucket { get; set; } = default!;
+}

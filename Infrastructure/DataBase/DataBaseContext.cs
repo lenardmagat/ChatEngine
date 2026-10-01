@@ -13,6 +13,7 @@ public class DbManager : DbContext
     public DbSet<SaleOffer> SaleOffers {get; set;} = null!;
     public DbSet<SaleOfferEvent> SaleOfferEvents {get; set;} = null!;
     public DbSet<Product> Products {get; set;} = null!;
+    public DbSet<PhotoModel> Photos {get; set;} = null!;
     public User SystemActor = new User
     {
         UserId = 4,
