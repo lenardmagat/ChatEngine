@@ -2,8 +2,9 @@ using ChatSystem.core;
 using ChatSystem.DTOs.Documentation;
 using ChatSystem.DTOs.Search;
 using ChatSystem.Services.Interfaces;
+using ChatSystem.Storage;
 namespace ChatSystem.EventHandler.Search;
-public class UserSearchStrategy(IDynamicSearchService searchService, IHasher hasher) : ISearchStrategy
+public class UserSearchStrategy(IDynamicSearchService searchService, IHasher hasher, IFileStorageService storageService) : ISearchStrategy
 {
     public SearchTarget Target => SearchTarget.Users;
 
@@ -43,7 +44,8 @@ public class UserSearchStrategy(IDynamicSearchService searchService, IHasher has
             .Select(user => new UserSearchDTOResponse
                 (
                     hasher.CreateHashids(int.Parse(user.id), HashContext.User),
-                    user.Username
+                    user.Username,
+                    user.ProfileImageKey ?? storageService.GetImageUrl("/defaults/somi.png")
                 )
             );
         return pagedResult.CastToObjectMapper();

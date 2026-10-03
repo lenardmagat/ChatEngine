@@ -18,7 +18,8 @@ public record SearchRequest(
 );
 public record UserSearchDTOResponse(
     string Id,
-    string Name
+    string Name,
+    string imageUrl
 );
 public record ProductSearchDTOResponse(
     string Id,

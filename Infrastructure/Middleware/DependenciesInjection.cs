@@ -81,6 +81,7 @@ public static class DependenciesInjection
         services.AddScoped<IDocumentStrategy, ProductDocumentationStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageTextStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageProposedStrategy>();
+        services.AddScoped<IMessageStrategy, SendMessageOfferAcceptedStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageCounterStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageDeclinedStrategy>();
         services.AddScoped<IMessageStrategy, SendMessageCompleteStrategy>();
