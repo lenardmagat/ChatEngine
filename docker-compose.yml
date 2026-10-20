@@ -7,6 +7,11 @@ services:
       POSTGRES_USER: lenard_admin
       POSTGRES_PASSWORD: super_secure_password123
       POSTGRES_DB: chat_system_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lenard_admin -d chat_system_db"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
     ports:
       - "5433:5432"
     volumes:
@@ -42,23 +47,37 @@ services:
       - Hashids__HasherSalt=${HASHID_SALT}
       - Hashids__MinHashLength=${Hashids__MinHashLength}
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=chat-db;Port=5432;Database=chat_system_db;Username=lenard_admin;Password=super_secure_password123
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
       - MeiliSearch__Url=${MEILISEARCH__URL}
       - MeiliSearch__MasterKey=${MEILISEARCH__MASTERKEY}
+      - Storage__AccessKey=${Storage__AccessKey}
+      - Storage__SecretKey=${Storage__SecretKey}
+      - Storage__InternalEndpoint=${Storage__InternalEndpoint}
+      - Storage__PublicEndpoint=${Storage__PublicEndpoint}
+      - Storage__Bucket=${Storage__Bucket}
     depends_on:
-      - chat-db
+      chat-db:
+        condition: service_started
+      seaweedfs:
+        condition: service_healthy
     networks:
       - chat-network
   
   seaweedfs:
     image: chrislusf/seaweedfs:4.42
     container_name: marketplace_storage
-   
     command: >
       server -dir=/data -s3
       -s3.config=/etc/seaweedfs/s3.json
       -master.volumeSizeLimitMB=512
       -volume.max=30
+      -ip.bind=0.0.0.0
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9333/cluster/status"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     ports:
       - "8333:8333"   # S3 API (already have this)
       - "8888:8888"   # Filer UI — browse files like a folder tree
@@ -74,8 +93,8 @@ services:
     depends_on: [seaweedfs]
     restart: "no"
     environment:
-      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY}
-      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY}
+      AWS_ACCESS_KEY_ID: ${Storage__AccessKey}
+      AWS_SECRET_ACCESS_KEY: ${Storage__SecretKey}
       AWS_DEFAULT_REGION: us-east-1
     volumes:
       - ./default-assets:/assets:ro   # put profile.png and product.png here

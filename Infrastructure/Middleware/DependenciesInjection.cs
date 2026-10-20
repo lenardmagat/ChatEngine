@@ -95,6 +95,7 @@ public static class DependenciesInjection
         services.AddScoped<IAuthServices, JWTAuthServices>();
         services.AddHostedService<MeiliSyncWorker>();
         services.AddHostedService<OfferStatusCheckingWorker>();
+        services.AddHostedService<AutoCompleteTransactionWorker>();
         return services;
     }
 }
