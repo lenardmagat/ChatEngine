@@ -18,11 +18,18 @@ public record ProductDetailsDTO
 public record UpdateProductDetailsDTO
 (
     string ProductId,
+
+    [Required]
+    [StringLength(100)]
     string NewName,
+
+    [StringLength(500)]
     string? NewDescription,
-    string UserPassword,
+
     decimal NewBasePrice,
     int Quantity,
+
+    [EnumDataType(typeof(IsAddOrRemove))]
     IsAddOrRemove IsAddOrRemove
 );
 [JsonConverter(typeof(JsonStringEnumConverter))]

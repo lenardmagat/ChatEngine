@@ -1,5 +1,5 @@
-/obj
-/bin
+obj/
+bin/
 /.vscode
 Properties/
 appsettings.Development.json
@@ -8,9 +8,9 @@ Routers/ForTestingRouters
 .env
 /default-assets
 /storage
-/Migrations
 chat_postgres_db.session.sql
 INSERT INTO Messages (.sql
-
-
-
+Logs/
+TestResults/
+/ChatEngine.Tests/Debug
+/ChatEngine.Tests/.dll
