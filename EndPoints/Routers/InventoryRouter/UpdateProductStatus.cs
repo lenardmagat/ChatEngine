@@ -5,12 +5,14 @@ using ChatSystem.SystemEvents.Inventory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ChatSystem.Routers.Inventory;
 public partial class InventoryController
 {
     [HttpPatch("UpdateProductStatus")]
     [Authorize]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> UpdateProductStatusRouter(
         [FromBody] UpdateProductStatusDTO updateProductStatusDTO,
         CancellationToken cancellationToken

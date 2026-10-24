@@ -4,10 +4,12 @@ using ChatSystem.Extensions;
 using ChatSystem.SystemEvents.Accounts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 namespace ChatSystem.Routers.Account;
 public partial class AccountController
 {
     [Authorize]
+    [EnableRateLimiting("auth")]
     [HttpPatch("AccountUpdate-ChangePassword")]
     public async Task<IActionResult> ChangePasswordEndPoint(
         [FromBody] PasswordCredentials passwordCredentials,

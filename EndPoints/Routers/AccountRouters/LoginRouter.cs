@@ -1,10 +1,12 @@
 using ChatSystem.ErrorHandling.Extension;
 using ChatSystem.SystemEvents.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 namespace ChatSystem.Routers.Account;
 public partial class AccountController
 {
     [HttpPost("Login")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> LoginAccountEndpoint(
         [FromBody] AccountCredentials AccountData,
         CancellationToken cancellation

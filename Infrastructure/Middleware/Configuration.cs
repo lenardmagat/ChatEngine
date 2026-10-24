@@ -6,6 +6,8 @@ using ChatSystem.Injection;
 using System.Text.Json.Serialization;
 using ChatSystem.HubExcept;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 namespace ChatSystem.Middleware;
 class Configuration
 {
@@ -84,6 +86,27 @@ class Configuration
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
+        builder.Services.AddRateLimiter(options => 
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                
+                options.AddPolicy("auth", context =>
+                    {     
+                        var ipAdress= context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                        
+                        return RateLimitPartition.GetFixedWindowLimiter(
+                            partitionKey: ipAdress,
+                            factory: _ => new FixedWindowRateLimiterOptions
+                            {
+                                PermitLimit = 5,
+                                Window = TimeSpan.FromMinutes(1),
+                                QueueLimit = 0
+                            }
+                        );
+                    }     
+                );    
+            }
+        );
         return builder.Build();
     }
 }

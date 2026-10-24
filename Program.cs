@@ -14,6 +14,10 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseRateLimiter();    
+}
 app.MapHub<AppHub>("/ChatHub");
 using (var scope = app.Services.CreateScope())
 {
