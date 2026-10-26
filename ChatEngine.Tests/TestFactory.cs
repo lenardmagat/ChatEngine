@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Respawn;
+using Respawn.Graph;
 using Serilog;
 
 namespace ChatEngine.TestFactory;
@@ -18,6 +19,8 @@ public class ChatEngineTestFactory : WebApplicationFactory<Program>
     public ChatEngineTestFactory()
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+        // Disable default JSON watchers before WebApplication.CreateBuilder runs.
+        Environment.SetEnvironmentVariable("DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE", "false");
         var testConfigPath = Path.Combine(AppContext.BaseDirectory, "appsettings.Testing.json");
         var config = new ConfigurationBuilder()
             .AddJsonFile(testConfigPath, optional: false)
@@ -41,7 +44,11 @@ public class ChatEngineTestFactory : WebApplicationFactory<Program>
         _respawner ??= await Respawner.CreateAsync(conn, new RespawnerOptions
         {
             DbAdapter = DbAdapter.Postgres,
-            SchemasToInclude = new[] { "public" }
+            SchemasToInclude = new[] { "public"},
+            TablesToIgnore = new[]
+            {
+                new Table("public", "__EFMigrationsHistory")
+            }
         });
         await _respawner.ResetAsync(conn);
     }
@@ -65,7 +72,7 @@ public class ChatEngineTestFactory : WebApplicationFactory<Program>
 
         builder.ConfigureAppConfiguration((ctx, configBuilder) =>
         {
-            configBuilder.AddJsonFile(testConfigPath, optional: false, reloadOnChange: true);
+            configBuilder.AddJsonFile(testConfigPath, optional: false, reloadOnChange: false);
         });
 
         builder.ConfigureServices(services =>

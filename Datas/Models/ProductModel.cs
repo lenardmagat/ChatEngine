@@ -39,5 +39,5 @@ public class Product
     public DateTime? UpdatedA {get; set;}
     public int? PhotoId = null;
     [ForeignKey("PhotoId")]
-    public PhotoModel? ProductPicture = null;
+    public PhotoModel? ProductPicture {get; set;} = null;
 }

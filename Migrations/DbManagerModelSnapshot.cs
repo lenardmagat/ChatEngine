@@ -157,6 +157,9 @@ namespace WebApplication1.Migrations
                     b.Property<int>("OwnerUserId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("PhotoId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ProductAvailable")
                         .HasColumnType("integer");
 
@@ -181,6 +184,8 @@ namespace WebApplication1.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("PhotoId");
 
                     b.ToTable("Products");
                 });
@@ -433,6 +438,45 @@ namespace WebApplication1.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ChatSytstem.Models.UploadEntry", b =>
+                {
+                    b.Property<int>("UploadEntryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UploadEntryId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Reference")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReferenceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Retries")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UploadEntryId");
+
+                    b.ToTable("UploadEntries");
+                });
+
             modelBuilder.Entity("OutboxEntry", b =>
                 {
                     b.Property<int>("Id")
@@ -503,7 +547,13 @@ namespace WebApplication1.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ChatSystem.Models.PhotoModel", "ProductPicture")
+                        .WithMany()
+                        .HasForeignKey("PhotoId");
+
                     b.Navigation("Owner");
+
+                    b.Navigation("ProductPicture");
                 });
 
             modelBuilder.Entity("ChatSystem.Models.RefreshToken", b =>

@@ -1,5 +1,6 @@
 using ChatSystem.DataBase;
 using ChatSystem.Hubs;
+using ChatSystem.Infrastructure;
 using ChatSystem.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -33,5 +34,6 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred while creating the database tables.");
     }
 }
+DirectoryHelper.EnsureUploadDirectory();
 app.Run();
 public partial class Program { }

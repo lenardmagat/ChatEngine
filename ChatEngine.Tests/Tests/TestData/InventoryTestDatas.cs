@@ -7,7 +7,7 @@ public class InventoryTestDatas
     {
         yield return new object[]
         {
-            new ProductDetailsDTO("TestProduct1", "TestProductDescription", 100m, 4, ProductMode.ForSaleOnly),
+            new ProductDetailsDTO("TestProduct1", "TestProductDescription", 100m, 4, ProductMode.ForSaleOnly, null, null),
             200, 
             "testUser",
             "TestuserPassword",
@@ -15,7 +15,7 @@ public class InventoryTestDatas
         };
         yield return new object[]
         {
-            new ProductDetailsDTO("Freebie", null, 0m, 0, ProductMode.ForSaleOnly),
+            new ProductDetailsDTO("Freebie", null, 0m, 0, ProductMode.ForSaleOnly, null, null),
             200, 
             "testUser",
             "TestuserPassword",
@@ -23,7 +23,7 @@ public class InventoryTestDatas
         };
         yield return new object[]
         {
-            new ProductDetailsDTO("TestProduct3", "Description", -100m, 4, ProductMode.ForSaleOnly),
+            new ProductDetailsDTO("TestProduct3", "Description", -100m, 4, ProductMode.ForSaleOnly, null, null),
             400, // Bad Request due to validation
             "testUser",
             "TestuserPassword",
@@ -31,7 +31,7 @@ public class InventoryTestDatas
         };
         yield return new object[]
         {
-            new ProductDetailsDTO("TestProduct4", "Description", 100m, -4, ProductMode.ForSaleOnly),
+            new ProductDetailsDTO("TestProduct4", "Description", 100m, -4, ProductMode.ForSaleOnly, null, null),
             400, // Bad Request due to validation
             "testUser",
             "TestuserPassword",
@@ -39,7 +39,7 @@ public class InventoryTestDatas
         };
         yield return new object[]
         {
-            new ProductDetailsDTO(null!, "Description", 100m, 4, ProductMode.ForSaleOnly),
+            new ProductDetailsDTO(null!, "Description", 100m, 4, ProductMode.ForSaleOnly, null, null),
             400, 
             "testUser",
             "TestuserPassword",
@@ -47,7 +47,7 @@ public class InventoryTestDatas
         };
         yield return new object[]
         {
-            new ProductDetailsDTO("TestProduct5", "Description", 100m, 4, ProductMode.ForSaleOnly),
+            new ProductDetailsDTO("TestProduct5", "Description", 100m, 4, ProductMode.ForSaleOnly, null, null),
             401, // Unauthorized
             "testUser",
             "TestuserPassword",
@@ -58,7 +58,7 @@ public class InventoryTestDatas
     public static IEnumerable<object[]> UpdateProductDatas()
     {
         var valid = new UpdateProductDetails_Test_DTO(
-            new ProductDetailsDTO("Original product", "Original description", 100m, 10, ProductMode.ForSaleOnly),
+            new ProductDetailsDTO("Original product", "Original description", 100m, 10, ProductMode.ForSaleOnly, null, null),
             "Updated product", "Updated description", 125.50m, 2,
             "inventoryOwner", "InventoryPassword123!");
 

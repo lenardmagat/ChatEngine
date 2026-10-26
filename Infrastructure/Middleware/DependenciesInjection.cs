@@ -25,6 +25,8 @@ using ChatSystem.EventHandler.OfferingMechanisms;
 using ChatSystem.EventHandler.chat;
 using Amazon.S3;
 using ChatSystem.Storage;
+using ChatSystem.BackgroundServices.UploadWorker;
+using System.Buffers;
 namespace ChatSystem.Injection;
 public static class DependenciesInjection
 {
@@ -93,9 +95,11 @@ public static class DependenciesInjection
         services.AddScoped<IJwtTokenServices, JwtServices>();
         services.AddScoped<JWTAuthServices>();
         services.AddScoped<IAuthServices, JWTAuthServices>();
+        services.AddScoped<BackgroundWorkerHelper>();
         services.AddHostedService<MeiliSyncWorker>();
         services.AddHostedService<OfferStatusCheckingWorker>();
         services.AddHostedService<AutoCompleteTransactionWorker>();
+        services.AddHostedService<UploadWorker>();
         return services;
     }
 }

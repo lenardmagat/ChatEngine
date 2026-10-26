@@ -12,7 +12,9 @@ public record ProductDetailsDTO
     decimal Baseprice,
     [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative")]
     int Stock,
-    ProductMode Mode
+    ProductMode Mode,
+    IFormFile? ProductIMG,
+    string? FileName
 );
 
 public record UpdateProductDetailsDTO

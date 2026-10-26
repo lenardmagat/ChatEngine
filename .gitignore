@@ -14,3 +14,6 @@ Logs/
 TestResults/
 /ChatEngine.Tests/Debug
 /ChatEngine.Tests/.dll
+/ChatEngine.Tests/.agents
+/ChatEngine.Tests/.aws
+/ChatEngine.Tests/.codex

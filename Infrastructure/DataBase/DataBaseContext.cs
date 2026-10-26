@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ChatSystem.Models;
+using ChatSytstem.Models;
 namespace ChatSystem.DataBase;
 public class DbManager : DbContext
 {
@@ -14,6 +15,7 @@ public class DbManager : DbContext
     public DbSet<SaleOfferEvent> SaleOfferEvents {get; set;} = null!;
     public DbSet<Product> Products {get; set;} = null!;
     public DbSet<PhotoModel> Photos {get; set;} = null!;
+    public DbSet<UploadEntry> UploadEntries {get; set;} = null!;
     public User SystemActor = new User
     {
         UserId = 4,

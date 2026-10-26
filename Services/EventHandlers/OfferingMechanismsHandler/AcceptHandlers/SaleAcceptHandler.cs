@@ -36,14 +36,16 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
                 .ThenInclude(r => r.Participants)
             .Where(s => s.Id == offerId)
             .FirstOrDefaultAsync(cancellationToken);
-
         if (!offer!.TransitionTo(SaleOfferStatus.Accepted))
         {
             return Result<MessageResponseDTO>.Failure("Request is not allowed in current status of transaction.", StatusCodes.Status400BadRequest);
         }
         var lastActorId = await _db.SaleOfferEvents
             .AsNoTracking()
-            .Where(e => e.SaleOfferId == offer.Id)
+            .Where(e => e.SaleOfferId == offer.Id &
+                e.SaleOfferId == offerId &
+                e.SaleOffer.RoomId == offer.RoomId
+            )
             .OrderByDescending(e => e.Version)
             .Select(e => e.ActorUserId)
             .FirstOrDefaultAsync(cancellationToken);
@@ -79,7 +81,7 @@ public class SaleAcceptOfferStrategy : IAcceptOfferStrategy
             await _db.SaleOfferEvents.AddAsync(offerEvent, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
-            int affectedRow = await _db.Products.ExecuteUpdateAsync(setter => setter
+            int affectedRow = await _db.Products.Where(p => p.Id == offer.Id).ExecuteUpdateAsync(setter => setter
                 .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut - offer.QuantityRequested)
                 );
             if(affectedRow == 0)

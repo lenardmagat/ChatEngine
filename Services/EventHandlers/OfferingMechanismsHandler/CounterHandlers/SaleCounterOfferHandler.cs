@@ -75,7 +75,7 @@ public class SaleCounterOfferHandler : ICounterOfferStrategy
             int quantityDelta = data.SalePayload.QuantityRequested >= existingOffer.QuantityRequested 
                 ? -(data.SalePayload.QuantityRequested - existingOffer.QuantityRequested)
                 : (existingOffer.QuantityRequested - data.SalePayload.QuantityRequested);
-            int rowsAffected = await _db.Products.ExecuteUpdateAsync(setter => setter
+            int rowsAffected = await _db.Products.Where(p => p.Id == ItemId).ExecuteUpdateAsync(setter => setter
                 .SetProperty(p => p.ProductAvailable, p => p.ProductAvailable + quantityDelta)
                 .SetProperty(p => p.ReservedProdcut, p => p.ReservedProdcut + quantityDelta)
                 .SetProperty(p => p.UpdatedA, p => DateTime.UtcNow)
