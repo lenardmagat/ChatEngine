@@ -4,7 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 namespace ChatSystem.Routers.Account;
 [ApiController]
-[Route("API/[controller]")]
+[Route("/[controller]")]
 public partial class AccountController : ControllerBase
 {
     private readonly IMediator _mediator;

@@ -31,7 +31,7 @@ public class UploadWorker(IServiceScopeFactory scopeFactory) : BackgroundService
                 foreach(var entry in pendings)
                 {
                     UploadFilesAsyncCommand command = new UploadFilesAsyncCommand(entry);
-                    await mediator.Send(command, cancellationToken);
+                    await mediator.Send(command, cancellationToken);     
                 }
             }
             catch

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ChatSystem.Routers.Features;
 [ApiController]
-[Route("API/[Controller]")]
+[Route("/[Controller]")]
 public partial class FeatureController : ControllerBase
 {
     private readonly IMediator _mediator;

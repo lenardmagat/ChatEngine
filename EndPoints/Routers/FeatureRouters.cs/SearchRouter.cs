@@ -9,13 +9,25 @@ using Microsoft.AspNetCore.Mvc;
 namespace ChatSystem.Routers.Features;
 public partial class FeatureController
 {
-    [HttpPost("Search")]
+    [HttpGet("Search")]
     public async Task<IActionResult> SearchEndpoint(
-        [FromBody] SearchRequest searchRequest,
-        CancellationToken cancellation
+        [FromQuery] string term,
+        [FromQuery] SearchTarget target,
+        CancellationToken cancellation,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        Dictionary<string, string>? filters = null
     )
     {
-        UnifiedSearch.Query query = new UnifiedSearch.Query(searchRequest);
+        UnifiedSearch.Query query = new UnifiedSearch.Query(
+            new SearchRequest(
+                term,
+                target,
+                page,
+                pageSize,
+                filters      
+            )
+        );
         var result = await _mediator.Send(query, cancellation);
         return result.ToActionResult();
     }
