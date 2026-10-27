@@ -30,8 +30,16 @@ public class UploadWorker(IServiceScopeFactory scopeFactory) : BackgroundService
 
                 foreach(var entry in pendings)
                 {
+                    logger.LogInformation($"Processing upload on {entry.Reference.ToString()}: {entry.ReferenceId}");
                     UploadFilesAsyncCommand command = new UploadFilesAsyncCommand(entry);
-                    await mediator.Send(command, cancellationToken);     
+                    var result = await mediator.Send(command, cancellationToken); 
+                    if(result.IsSuccess) {
+                        logger.LogInformation($"Success Uploading on {entry.Reference.ToString()}: {entry.ReferenceId}");
+                    }
+                    else
+                    {
+                        logger.LogInformation($"Failed Uploading on {entry.Reference.ToString()}: {entry.ReferenceId}. Details: {entry}, {result}");
+                    }
                 }
             }
             catch

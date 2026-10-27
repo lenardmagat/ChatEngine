@@ -16,6 +16,7 @@ public class DbManager : DbContext
     public DbSet<Product> Products {get; set;} = null!;
     public DbSet<PhotoModel> Photos {get; set;} = null!;
     public DbSet<UploadEntry> UploadEntries {get; set;} = null!;
+    public DbSet<Notification> Notifications {get; set;} = null!;
     public User SystemActor = new User
     {
         UserId = 4,

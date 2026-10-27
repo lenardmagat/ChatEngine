@@ -51,7 +51,7 @@ public class AutoCompleteOfferHander(DbManager db, ILogger<AutoCompleteOfferHand
                 };
                 await db.Messages.AddAsync(message, cancellation);
                 await db.SaveChangesAsync(cancellation);
-
+                
                 var responseMessage = await db.Messages
                     .AsNoTracking()
                     .Where(m => m.RoomId == offer.RoomId)
@@ -90,7 +90,26 @@ public class AutoCompleteOfferHander(DbManager db, ILogger<AutoCompleteOfferHand
                         OfferTye.Sale
                     )
                 );
-                
+                await db.Notifications.AddAsync(
+                    new Notification
+                    {
+                        UserId = responseMessage.ParticipantsId.First(),
+                        Type = NotificationType.User,
+                        Message = $"The system completed the offer.",
+                        TargetId = hasher.CreateHashids(offer.Id, HashContext.SaleOffer)
+                    }
+                );
+                await db.SaveChangesAsync(cancellation);
+                await db.Notifications.AddAsync(
+                    new Notification
+                    {
+                        UserId = db.SystemActor.UserId,
+                        Type = NotificationType.Message,
+                        Message = $"New message",
+                        TargetId = hasher.CreateHashids(offer.Id, HashContext.SaleOffer)
+                    }
+                );
+                await db.SaveChangesAsync(cancellation); 
                 await transaction.CommitAsync(cancellation);
                 return Result<MessageResponseDTO>.Success(responseDTO);
             }

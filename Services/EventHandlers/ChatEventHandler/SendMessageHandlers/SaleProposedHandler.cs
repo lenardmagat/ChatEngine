@@ -45,7 +45,26 @@ public class SendMessageProposedStrategy : IMessageStrategy
                     SaleOfferEventId = request.OfferPayload.SaleOfferEventId
                 };
                 await _db.Messages.AddAsync(Newmessage, cancellation);
+                await _db.Notifications.AddAsync(
+                    new Notification
+                    {
+                        UserId = roomData!.ReceiverId,
+                        Type = NotificationType.User,
+                        Message = $"{roomData.ReceiverUsername} proposed an offer!",
+                        TargetId = _hasher.CreateHashids(request.OfferPayload.offerId, HashContext.SaleOffer)
+                    }
+                );
                 await _db.SaveChangesAsync(cancellation);
+                await _db.Notifications.AddAsync(
+                    new Notification
+                    {
+                        UserId = roomData!.ReceiverId,
+                        Type = NotificationType.Message,
+                        Message = $"New message",
+                        TargetId = _hasher.CreateHashids(Newmessage.Id, HashContext.SaleOffer)
+                    }
+                );
+                await _db.SaveChangesAsync(cancellation);   
 
                 var saleOfferEvent = await _db.SaleOfferEvents
                     .AsNoTracking()

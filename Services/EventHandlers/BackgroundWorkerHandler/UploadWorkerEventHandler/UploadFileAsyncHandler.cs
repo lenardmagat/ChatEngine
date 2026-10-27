@@ -101,6 +101,7 @@ public class UploadFileAsyncHandler(
             .SetProperty(p => p.PhotoId, photo.PhotoId),
             cancellationToken
         );
+        await db.SaveChangesAsync(cancellationToken);
         if(affectedRow == 0)
         {
             return Result.Failure("Non existence profile.", StatusCodes.Status404NotFound);
@@ -121,6 +122,7 @@ public class UploadFileAsyncHandler(
             .SetProperty(p => p.PhotoId, photo.PhotoId),
             cancellationToken
             );
+        await db.SaveChangesAsync(cancellationToken);
         if(affectedRow == 0)
         {
             return Result.Failure("Non existence profile.", StatusCodes.Status404NotFound);

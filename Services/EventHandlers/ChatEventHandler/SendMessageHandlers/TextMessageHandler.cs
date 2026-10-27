@@ -46,6 +46,15 @@ public class SendMessageTextStrategy : IMessageStrategy
                 Type = MessageType.Text
             };
             await _db.Messages.AddAsync(newMessage, cancellation);
+            await _db.Notifications.AddAsync(
+                new Notification
+                {
+                    UserId = RoomData.ReceiverId,
+                    Type = NotificationType.Message,
+                    Message = "New Message",
+                    TargetId = _hasher.CreateHashids(newMessage.Id, HashContext.Message)
+                }
+            );
             await _db.SaveChangesAsync(cancellation);
             await transaction.CommitAsync(cancellation);
             return Result<MessageResponseDTO>.Success(new MessageResponseDTO

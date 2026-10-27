@@ -1,12 +1,14 @@
 using System.Transactions;
+using ChatSystem.core;
 using ChatSystem.DataBase;
 using ChatSystem.ErrorHandling;
+using ChatSystem.Models;
 using ChatSystem.SystemEvents.OfferBackgroundEvents;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ChatSystem.EventHandler.OfferMechanisBackgroundWorker;
-public class ExpiredOfferHandler(DbManager db, ILogger<ExpiredOfferHandler> logger) : IRequestHandler<ExpiredOfferCommand, Result>
+public class ExpiredOfferHandler(DbManager db, ILogger<ExpiredOfferHandler> logger, IHasher hasher) : IRequestHandler<ExpiredOfferCommand, Result>
 {
     public async Task<Result> Handle(ExpiredOfferCommand command, CancellationToken cancellation)
     {
@@ -45,6 +47,26 @@ public class ExpiredOfferHandler(DbManager db, ILogger<ExpiredOfferHandler> logg
                     EntityType = DTOs.Documentation.DocumentTarget.Product 
                 }, cancellation);
                 await db.SaveChangesAsync(cancellation);
+                await db.Notifications.AddAsync(
+                    new Notification
+                    {
+                        UserId = SaleOfferData.ProposedByUserId,
+                        Type = NotificationType.User,
+                        Message = $"The system Expired the offer.",
+                        TargetId = hasher.CreateHashids(SaleOfferData.Id, HashContext.SaleOffer)
+                    }
+                );
+                await db.SaveChangesAsync(cancellation);
+                await db.Notifications.AddAsync(
+                    new Notification
+                    {
+                        UserId = SaleOfferData.SellerUserId,
+                        Type = NotificationType.Message,
+                        Message = $"The system Expired the offer",
+                        TargetId = hasher.CreateHashids(SaleOfferData.Id, HashContext.SaleOffer)
+                    }
+                );
+                await db.SaveChangesAsync(cancellation); 
                 await Transaction.CommitAsync(cancellation);
             }
             else

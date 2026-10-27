@@ -22,7 +22,7 @@ public class AuthenticatedUserTestServices
         formData.Add(new StringContent(username), "Username");
         formData.Add(new StringContent(password), "password");
 
-        return await _client.PostAsync("/API/Account/Create", formData); 
+        return await _client.PostAsync("/Account/Create", formData); 
     }
     
     public async Task<string> RegisterAndLogin(string username, string password)
@@ -35,7 +35,7 @@ public class AuthenticatedUserTestServices
             Username = username,
             password = password
         };
-        var response = await _client.PostAsJsonAsync("/API/Account/Login", loginPayload);
+        var response = await _client.PostAsJsonAsync("/Account/Login", loginPayload);
         response.EnsureSuccessStatusCode();
         var token = await response.Content.ReadFromJsonAsync<AuthJWTResponse>();
         return token?.AccessToken ?? string.Empty;
@@ -49,7 +49,7 @@ public class AuthenticatedUserTestServices
             OldPassword = oldPassword,
             NewPassword = newPassword
         };
-        return await _client.PatchAsJsonAsync("/API/Account/AccountUpdate-ChangePassword", ChangePasswordPayload);
+        return await _client.PatchAsJsonAsync("/Account/AccountUpdate-ChangePassword", ChangePasswordPayload);
     }
 
     public static async Task<HubConnection> ConnectHubAsync(ChatEngineTestFactory factory, string jwt)

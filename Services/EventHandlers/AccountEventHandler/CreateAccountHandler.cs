@@ -47,7 +47,7 @@ public class CreateAccountHandler : IRequestHandler<CreateAccountCommand, Result
             await _db.OutboxEntries.AddAsync(new OutboxEntry{EntityId = newUser.UserId, EntityType = DTOs.Documentation.DocumentTarget.User}, cancellation);
             await _db.SaveChangesAsync(cancellation);
 
-            if(command.Credentials.FileName != null && command.Credentials.ProfilePicture != null)
+            if(command.Credentials.ProfilePicture != null)
             {
                 if (!_storageService.AllowedImageExtension(command.Credentials.ProfilePicture.FileName))
                 {
